@@ -92,8 +92,11 @@ func main() {
 		jpPanel.Gels2Segments()
 	}
 
-	var xlsx = excelize.NewFile()
-	var sheet = ""
+	var (
+		xlsx       = excelize.NewFile()
+		sheet      = ""
+		bgStyleMap = CreateStyles(xlsx)
+	)
 
 	// 输出1-清单
 	sheet = "清单"
@@ -154,15 +157,15 @@ func main() {
 			log.Fatalf("片段超限[%d > %d][%s:%t][%+v]", len(segmentIDs), maxSegment, jpID, jpPanel.TY, segmentIDs)
 		}
 
-		cellName := simpleUtil.HandleError(excelize.CoordinatesToCellName(1, i*TabelRow+1))
+		cellName := CoordinatesToCellName(1, i*TabelRow+1)
 		simpleUtil.CheckErr(
 			xlsx.SetSheetRow(sheet, cellName, &[]any{jpID, jpID}),
 		)
-		cellName = simpleUtil.HandleError(excelize.CoordinatesToCellName(3, i*TabelRow+1))
+		cellName = CoordinatesToCellName(3, i*TabelRow+1)
 		simpleUtil.CheckErr(
 			xlsx.SetSheetRow(sheet, cellName, &PanelColTitle),
 		)
-		cellName = simpleUtil.HandleError(excelize.CoordinatesToCellName(2, i*TabelRow+2))
+		cellName = CoordinatesToCellName(2, i*TabelRow+2)
 		simpleUtil.CheckErr(
 			xlsx.SetSheetCol(sheet, cellName, &PanelRowTitle),
 		)
@@ -180,6 +183,9 @@ func main() {
 				cellName = simpleUtil.HandleError(excelize.CoordinatesToCellName(2+col, row+2+i*TabelRow))
 				ID := fmt.Sprintf("%s-%s", segment.ID, cloneID)
 				simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, ID))
+				if segment.CloneStatus[cloneID] {
+					simpleUtil.CheckErr(xlsx.SetCellStyle(sheet, cellName, cellName, bgStyleMap[j%3]))
+				}
 				cloneIndex++
 			}
 		}
