@@ -228,6 +228,7 @@ func (jpPanel *JPPanel) AddFromPanel(xlsx *excelize.File, sheet string, i int, b
 			simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, ID))
 			if clone, ok := segment.CloneMap[cloneID]; ok {
 				clone.FromCell = fromCel
+				clone.FromPanel = jpPanel.ID
 				simpleUtil.CheckErr(xlsx.SetCellStyle(sheet, cellName, cellName, bgStyleMap[j%3]))
 			}
 			cloneIndex++
@@ -264,8 +265,12 @@ type Segment struct {
 }
 
 type Clone struct {
-	Index    int
-	ID       string
-	FromCell string
-	ToCell   string
+	Index int
+	ID    string
+
+	FromPanel string
+	FromCell  string
+
+	ToPanel string
+	ToCell  string
 }
