@@ -30,6 +30,13 @@ var (
 	MaxGelCol = 25
 	MaxGelRow = 4
 
+	// 96孔板
+	PanelCol      = 12
+	PanelRow      = 8
+	TabelRow      = 10
+	PanelColTitle = []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	PanelRowTitle = []string{"A", "B", "C", "D", "E", "F", "G", "H"}
+
 	isTY = regexp.MustCompile(`-TY\d+`)
 
 	ColName12 []string
@@ -71,7 +78,7 @@ func init() {
 		*prefix = strings.TrimSuffix(*input, ".xlsx")
 	}
 
-	for i := range MaxCloneSelect {
+	for i := range PanelCol {
 		ColName12 = append(ColName12, strconv.Itoa(i+1))
 	}
 }
@@ -127,51 +134,59 @@ func main() {
 		}
 	}
 	fmt.Println("==END==")
-	simpleUtil.CheckErr(xlsx.DeleteSheet("Sheet1"))
-	simpleUtil.CheckErr(xlsx.SaveAs(*prefix + ".result.xlsx"))
 
 	// 输出2-选择孔图
+	sheet = "选择孔图"
+	simpleUtil.HandleError(xlsx.NewSheet(sheet))
+	xlsx.SetColWidth(sheet, "A", "B", 12)
+	xlsx.SetColWidth(sheet, "C", "N", 18)
 	fmt.Println("==输出2-选择孔图==")
-	for _, jpID := range jpPanelList {
+	for i, jpID := range jpPanelList {
 		jpPanel := jpPanelMap[jpID]
 		segmentIDs := jpPanel.Segments
 		maxSegment := MaxSegment
+		maxJPClone := MaxJPClone
 		if jpPanel.TY {
 			maxSegment = MaxSegmentTY
+			maxJPClone = MaxJPCloneTY
 		}
 		if len(segmentIDs) > maxSegment {
 			log.Fatalf("片段超限[%d > %d][%s:%t][%+v]", len(segmentIDs), maxSegment, jpID, jpPanel.TY, segmentIDs)
 		}
 
-		fmt.Printf("%s\t%s\t%s", jpID, jpID, strings.Join(ColName12, "\t"))
-		fmt.Println()
+		cellName := simpleUtil.HandleError(excelize.CoordinatesToCellName(1, i*TabelRow+1))
+		simpleUtil.CheckErr(
+			xlsx.SetSheetRow(sheet, cellName, &[]any{jpID, jpID}),
+		)
+		cellName = simpleUtil.HandleError(excelize.CoordinatesToCellName(3, i*TabelRow+1))
+		simpleUtil.CheckErr(
+			xlsx.SetSheetRow(sheet, cellName, &PanelColTitle),
+		)
+		cellName = simpleUtil.HandleError(excelize.CoordinatesToCellName(2, i*TabelRow+2))
+		simpleUtil.CheckErr(
+			xlsx.SetSheetCol(sheet, cellName, &PanelRowTitle),
+		)
 
-		for j := range maxSegment {
-			if j >= len(segmentIDs) {
-				fmt.Printf("%s\t%c\n", jpID, 'A'+j*2)
-				fmt.Printf("%s\t%c\n", jpID, 'A'+j*2+1)
-				continue
-			}
-			segmentInfo := segmentIDs[j]
-			// for k:=range 24{
-			// 	row:='A'+j*2+k/12
-			// }
-			row := 'A' + j*2
-			fmt.Printf("%s\t%c\n", jpID, row)
-			for k := range MaxCloneSelect {
+		cloneIndex := 0
+		for j := range segmentIDs {
+			segment := segmentIDs[j]
+			// fmt.Printf("%s\t%c\n", jpID, row)
+			for k := range maxJPClone {
+				row := cloneIndex / PanelCol
+				col := 1 + cloneIndex%PanelCol
+				fromCel := fmt.Sprintf("%c%d", row+'A', col)
 				cloneID := strconv.Itoa(k + 1)
-				segmentInfo.FromPanel[cloneID] = fmt.Sprintf("%c%d", row, k+1)
-				fmt.Printf("\t%s:%s-%s:%t", segmentInfo.FromPanel[cloneID], segmentInfo.ID, cloneID, segmentInfo.CloneStatus[cloneID])
-			}
-			fmt.Printf("%s\t%c", jpID, 'A'+j*2+1)
-			for k := range MaxCloneSelect {
-				cloneID := strconv.Itoa(k + 1 + MaxCloneSelect)
-				segmentInfo.FromPanel[cloneID] = fmt.Sprintf("%c%d", row, k+1)
-				fmt.Printf("\t%s:%s-%s:%t", segmentInfo.FromPanel[cloneID], segmentInfo.ID, cloneID, segmentInfo.CloneStatus[cloneID])
+				segment.FromPanel[cloneID] = fromCel
+				cellName = simpleUtil.HandleError(excelize.CoordinatesToCellName(2+col, row+2+i*TabelRow))
+				ID := fmt.Sprintf("%s-%s", segment.ID, cloneID)
+				simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, ID))
+				cloneIndex++
 			}
 		}
 	}
 	fmt.Println("==END==")
+	simpleUtil.CheckErr(xlsx.DeleteSheet("Sheet1"))
+	simpleUtil.CheckErr(xlsx.SaveAs(*prefix + ".result.xlsx"))
 
 	// 输出2-输出孔图
 	fmt.Println("==输出2-输出孔图==")
