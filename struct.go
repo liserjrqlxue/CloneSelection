@@ -20,14 +20,21 @@ type JPPanel struct {
 
 func (jpPanel *JPPanel) Gels2Segments() {
 	var (
-		gels = jpPanel.Gels
+		gels       = jpPanel.Gels
+		jpCloneMax = MaxJPClone
 		// 非ladder克隆序号
 		index = 0
 	)
+	if jpPanel.TY {
+		jpCloneMax = MaxJPCloneTY
+	}
 
 	// 校验GelLayout
 	if gels[0][0] == "/" && gels[1][0] == "/" && gels[2][0] == "/" && gels[3][0] == "/" {
 		jpPanel.GelLayout = "first ladder"
+		if jpPanel.TY {
+			jpPanel.GelLayout += " for TY"
+		}
 	}
 	if gels[0][16] == "/" && gels[1][8] == "/" && gels[2][16] == "/" && gels[3][8] == "/" {
 		jpPanel.GelLayout = "partition ladder"
@@ -35,17 +42,14 @@ func (jpPanel *JPPanel) Gels2Segments() {
 	if jpPanel.GelLayout == "" {
 		log.Fatalf("Unknown Gels Layout for [%s]:%+v", jpPanel.ID, gels)
 	}
-	if jpPanel.TY {
-		jpPanel.GelLayout += " for TY"
-	}
 
 	// 遍历Gels, 更新 Segment
 	for j := range MaxGelRow {
 		for k := range MaxGelCol {
 			gel := gels[j][k]
 			if gel != "/" {
-				segmentIndex := index / MaxClone
-				cloneID := strconv.Itoa(index%MaxClone + 1)
+				segmentIndex := index / jpCloneMax
+				cloneID := strconv.Itoa(index%jpCloneMax + 1)
 
 				segment := jpPanel.Segments[segmentIndex]
 				segment.CloneIDs = append(segment.CloneIDs, cloneID)

@@ -14,16 +14,19 @@ import (
 var (
 	InputSheet = "胶图判定"
 	// 每个JP板的片段个数
-	MaxSegment = 6
+	MaxSegmentRow = 8
+	MaxSegment    = 6
+	MaxSegmentTY  = 8
 	// 每个片段的克隆个数
-	MaxClone       = 16
+	MaxJPClone     = 16
+	MaxJPCloneTY   = 12
 	MaxCloneSelect = 12
 
 	// 胶图 25x4
 	MaxGelCol = 25
 	MaxGelRow = 4
 
-	isTY = regexp.MustCompile(`-TY-\d+`)
+	isTY = regexp.MustCompile(`-TY\d+`)
 
 	ColName12 []string
 
@@ -106,14 +109,18 @@ func main() {
 	for _, jpID := range jpPanelList {
 		jpPanel := jpPanelMap[jpID]
 		segmentIDs := jpPanel.Segments
-		if len(segmentIDs) > 6 {
-			log.Fatalf("片段超限[%s][%+v]", jpID, segmentIDs)
+		maxSegment := MaxSegment
+		if jpPanel.TY {
+			maxSegment = MaxSegmentTY
+		}
+		if len(segmentIDs) > maxSegment {
+			log.Fatalf("片段超限[%d > %d][%s:%t][%+v]", len(segmentIDs), maxSegment, jpID, jpPanel.TY, segmentIDs)
 		}
 
 		fmt.Printf("%s\t%s\t%s", jpID, jpID, strings.Join(ColName12, "\t"))
 		fmt.Println()
 
-		for j := range 6 {
+		for j := range maxSegment {
 			if j >= len(segmentIDs) {
 				fmt.Printf("%s\t%c\n", jpID, 'A'+j*2)
 				fmt.Printf("%s\t%c\n", jpID, 'A'+j*2+1)
