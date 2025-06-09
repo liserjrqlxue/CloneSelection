@@ -111,29 +111,3 @@ type Segment struct {
 	// Cell Name
 	FromPanel map[string]string
 }
-
-func NewSegmentInfo(item map[string]string) *Segment {
-	segmentInfo := &Segment{
-		ID:             item["片段名称"],
-		JPID:           item["JP-日期"],
-		Length:         stringsUtil.Atoi(item["片段长度"]),
-		SequencePrimer: item["测序引物"],
-		Note2Product:   item["备注（to生产）"],
-		CloneStatus:    make(map[string]bool),
-		FromPanel:      make(map[string]string),
-	}
-
-	for primer := range strings.SplitSeq(segmentInfo.SequencePrimer, "、") {
-		switch primer {
-		case "T7":
-			segmentInfo.T7Primer = true
-		case "T7-Term":
-			segmentInfo.T7TermPrimer = true
-		default:
-			segmentInfo.OtherPrimers = append(segmentInfo.OtherPrimers, primer)
-		}
-
-	}
-
-	return segmentInfo
-}
