@@ -8,6 +8,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/liserjrqlxue/goUtil/simpleUtil"
+	"github.com/xuri/excelize/v2"
 )
 
 // global
@@ -18,9 +21,10 @@ var (
 	MaxSegment    = 6
 	MaxSegmentTY  = 8
 	// 每个片段的克隆个数
-	MaxJPClone     = 16
-	MaxJPCloneTY   = 12
-	MaxCloneSelect = 12
+	MaxJPClone       = 16
+	MaxJPCloneTY     = 12
+	MaxCloneSelect   = 8
+	MaxCloneSelectTY = 6
 
 	// 胶图 25x4
 	MaxGelCol = 25
@@ -81,28 +85,50 @@ func main() {
 		jpPanel.Gels2Segments()
 	}
 
+	var xlsx = excelize.NewFile()
+	var sheet = ""
+
 	// 输出1-清单
-	fmt.Println("==输出1-清单==")
-	fmt.Println(strings.Join(DetailedListTitle, "\t"))
-	i := 0
+	sheet = "清单"
+	simpleUtil.HandleError(xlsx.NewSheet(sheet))
+	xlsx.SetColWidth(sheet, "B", "B", 16)
+	xlsx.SetColWidth(sheet, "D", "F", 16)
+	xlsx.SetColWidth(sheet, "G", "G", 70)
+	xlsx.SetColWidth(sheet, "H", "H", 40)
+	index := 0
+	cellName := simpleUtil.HandleError(excelize.CoordinatesToCellName(1, index+1))
+	simpleUtil.CheckErr(
+		xlsx.SetSheetRow(sheet, cellName, &DetailedListTitle),
+	)
 	for _, jpID := range jpPanelList {
 		jpPanel := jpPanelMap[jpID]
+		maxCloneSelect := MaxCloneSelect
+		if jpPanel.TY {
+			maxCloneSelect = MaxCloneSelectTY
+		}
 		for _, segmentInfo := range jpPanel.Segments {
-			i++
-			fmt.Printf(
-				"%d\t%s\t%d\t%s\t%d\t%d\t%s\t%s\n",
-				i,
-				segmentInfo.ID,
-				segmentInfo.Length,
-				segmentInfo.SequencePrimer,
-				len(segmentInfo.CloneIDs),
-				min(MaxCloneSelect, len(segmentInfo.CloneIDs)),
-				segmentInfo.ID+"-"+strings.Join(segmentInfo.CloneIDs, "、"),
-				segmentInfo.ID+"-"+strings.Join(segmentInfo.CloneIDs[:min(MaxCloneSelect, len(segmentInfo.CloneIDs))], "、"),
+			index++
+			cellName = simpleUtil.HandleError(excelize.CoordinatesToCellName(1, index+1))
+			simpleUtil.CheckErr(
+				xlsx.SetSheetRow(
+					sheet, cellName,
+					&[]any{
+						index,
+						segmentInfo.ID,
+						segmentInfo.Length,
+						segmentInfo.SequencePrimer,
+						len(segmentInfo.CloneIDs),
+						min(maxCloneSelect, len(segmentInfo.CloneIDs)),
+						segmentInfo.ID + "-" + strings.Join(segmentInfo.CloneIDs, "、"),
+						segmentInfo.ID + "-" + strings.Join(segmentInfo.CloneIDs[:min(maxCloneSelect, len(segmentInfo.CloneIDs))], "、"),
+					},
+				),
 			)
 		}
 	}
 	fmt.Println("==END==")
+	simpleUtil.CheckErr(xlsx.DeleteSheet("Sheet1"))
+	simpleUtil.CheckErr(xlsx.SaveAs(*prefix + ".result.xlsx"))
 
 	// 输出2-选择孔图
 	fmt.Println("==输出2-选择孔图==")
@@ -149,7 +175,7 @@ func main() {
 
 	// 输出2-输出孔图
 	fmt.Println("==输出2-输出孔图==")
-	index := 0
+	index = 0
 	panelID := ""
 	for i, jpID := range jpPanelList {
 		if i%2 == 0 {
