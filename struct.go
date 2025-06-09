@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+	"strconv"
 	"strings"
 
 	"github.com/liserjrqlxue/goUtil/stringsUtil"
@@ -10,12 +12,81 @@ type JPPanel struct {
 	ID        string
 	Index     int
 	Date      string
-	Segments  []*SegmentInfo
+	Segments  []*Segment
 	Gels      [4][25]string
 	GelLayout string
 }
 
-type SegmentInfo struct {
+func (jpPanel *JPPanel) Gels2Segments() {
+	var (
+		gels = jpPanel.Gels
+		// 非ladder克隆序号
+		index = 0
+	)
+
+	// 校验GelLayout
+	if gels[0][0] == "/" && gels[1][0] == "/" && gels[2][0] == "/" && gels[3][0] == "/" {
+		jpPanel.GelLayout = "first ladder"
+	}
+	if gels[0][16] == "/" && gels[1][8] == "/" && gels[2][16] == "/" && gels[3][8] == "/" {
+		jpPanel.GelLayout = "partition ladder"
+	}
+	if jpPanel.GelLayout == "" {
+		log.Fatalf("Unknown Gels Layout for [%s]:%+v", jpPanel.ID, gels)
+	}
+
+	// 遍历Gels, 更新 Segment
+	for j := range MaxGelRow {
+		for k := range MaxGelCol {
+			gel := gels[j][k]
+			if gel != "/" {
+				segmentIndex := index / MaxClone
+				cloneID := strconv.Itoa(index%MaxClone + 1)
+
+				segment := jpPanel.Segments[segmentIndex]
+				segment.CloneIDs = append(segment.CloneIDs, cloneID)
+				segment.CloneStatus[cloneID] = true
+
+				index++
+			}
+		}
+	}
+
+	// 更新 segment.SequenceCount
+	for j := range jpPanel.Segments {
+		segment := jpPanel.Segments[j]
+		segment.SequenceCount = min(MaxCloneSelect, len(segment.CloneIDs))
+	}
+}
+
+func (jpPanel *JPPanel) AddSegment(item map[string]string) *Segment {
+	segment := &Segment{
+		ID:             item["片段名称"],
+		JPID:           jpPanel.ID,
+		Length:         stringsUtil.Atoi(item["片段长度"]),
+		SequencePrimer: item["测序引物"],
+		Note2Product:   item["备注（to生产）"],
+		CloneStatus:    make(map[string]bool),
+		FromPanel:      make(map[string]string),
+	}
+
+	for primer := range strings.SplitSeq(segment.SequencePrimer, "、") {
+		switch primer {
+		case "T7":
+			segment.T7Primer = true
+		case "T7-Term":
+			segment.T7TermPrimer = true
+		default:
+			segment.OtherPrimers = append(segment.OtherPrimers, primer)
+		}
+	}
+
+	jpPanel.Segments = append(jpPanel.Segments, segment)
+
+	return segment
+}
+
+type Segment struct {
 	ID             string
 	JPID           string
 	Length         int
@@ -24,7 +95,6 @@ type SegmentInfo struct {
 	T7TermPrimer   bool
 	OtherPrimers   []string
 	Note2Product   string
-	Ladder         string
 	CloneIDs       []string
 	// CloneIDs -> true
 	CloneStatus map[string]bool
@@ -34,14 +104,13 @@ type SegmentInfo struct {
 	FromPanel map[string]string
 }
 
-func NewSegmentInfo(item map[string]string) *SegmentInfo {
-	segmentInfo := &SegmentInfo{
+func NewSegmentInfo(item map[string]string) *Segment {
+	segmentInfo := &Segment{
 		ID:             item["片段名称"],
 		JPID:           item["JP-日期"],
 		Length:         stringsUtil.Atoi(item["片段长度"]),
 		SequencePrimer: item["测序引物"],
 		Note2Product:   item["备注（to生产）"],
-		Ladder:         item["Laddar"],
 		CloneStatus:    make(map[string]bool),
 		FromPanel:      make(map[string]string),
 	}

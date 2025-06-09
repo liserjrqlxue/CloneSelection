@@ -72,36 +72,7 @@ func main() {
 	for i := range jpPanelList {
 		jpID := jpPanelList[i]
 		jpPanel := jpPanelMap[jpID]
-		gels := jpPanel.Gels
-		if gels[0][0] == "/" && gels[1][0] == "/" && gels[2][0] == "/" && gels[3][0] == "/" {
-			jpPanel.GelLayout = "first ladder"
-		}
-		if gels[0][16] == "/" && gels[1][8] == "/" && gels[2][16] == "/" && gels[3][8] == "/" {
-			jpPanel.GelLayout = "partition ladder"
-		}
-		if jpPanel.GelLayout == "" {
-			log.Fatalf("Unknown Gels Layout for [%s]:%+v", jpPanel.ID, gels)
-		}
-		index := 0
-		for j := range MaxGelRow {
-			for k := range MaxGelCol {
-				gel := gels[j][k]
-				if gel != "/" {
-					segmentIndex := index / MaxClone
-					segment := jpPanel.Segments[segmentIndex]
-
-					cloneID := strconv.Itoa(index%MaxClone + 1)
-					segment.CloneIDs = append(segment.CloneIDs, cloneID)
-					segment.CloneStatus[cloneID] = true
-
-					index++
-				}
-			}
-		}
-		for j := range jpPanel.Segments {
-			segment := jpPanel.Segments[j]
-			segment.SequenceCount = min(MaxCloneSelect, len(segment.CloneIDs))
-		}
+		jpPanel.Gels2Segments()
 	}
 
 	// 输出1-清单

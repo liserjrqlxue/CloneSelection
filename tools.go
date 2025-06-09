@@ -49,24 +49,25 @@ func LoadInput(excel, sheet string) (jpPanelMap map[string]*JPPanel, jpPanelList
 			if jpPanelCurrent == nil || jpPanelCurrent.ID == "" {
 				log.Fatalf("JP-日期:before A%d empty", i+1)
 			}
-			if !ok || jpID == "" {
-				item["JP-日期"] = jpPanelCurrent.ID
-			} else {
+			if jpID != "" {
 				log.Fatalf("JP-日期:A%d not empty[%+v]", i+1, item)
 			}
 		}
+
+		// 更新Gels
 		if j := (i - 1) % MaxSegment; j < 4 {
 			for k := range 25 {
 				col := strconv.Itoa(k + 1)
 				jpPanelCurrent.Gels[j][k] = item[col]
 			}
 		}
-		segmentInfo := NewSegmentInfo(item)
+
+		segmentInfo := jpPanelCurrent.AddSegment(item)
 		if segmentInfoMap[segmentInfo.ID] {
 			log.Fatalf("片段重复:[%d:%s]", i+1, segmentInfo.ID)
 		}
 		segmentInfoMap[segmentInfo.ID] = true
-		jpPanelCurrent.Segments = append(jpPanelCurrent.Segments, segmentInfo)
+
 	}
 	return
 }
