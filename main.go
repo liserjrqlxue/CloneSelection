@@ -102,99 +102,14 @@ func main() {
 
 	// 输出2-选择孔图
 	sheet = "选择孔图"
-	simpleUtil.HandleError(xlsx.NewSheet(sheet))
-	xlsx.SetColWidth(sheet, "A", "B", 12)
-	xlsx.SetColWidth(sheet, "C", "N", 18)
-	fmt.Println("==输出2-选择孔图==")
-	for i, jpPanel := range jps.List {
-		jpID := jpPanel.ID
-		segmentIDs := jpPanel.Segments
+	jps.CreateFromPanel(xlsx, sheet, bgStyleMap)
 
-		maxSegment := MaxSegment
-		maxJPClone := MaxJPClone
-		if jpPanel.TY {
-			maxSegment = MaxSegmentTY
-			maxJPClone = MaxJPCloneTY
-		}
-
-		if len(segmentIDs) > maxSegment {
-			log.Fatalf("片段超限[%d > %d][%s:%t][%+v]", len(segmentIDs), maxSegment, jpID, jpPanel.TY, segmentIDs)
-		}
-
-		cellName := CoordinatesToCellName(1, i*TabelRow+1)
-		simpleUtil.CheckErr(
-			xlsx.SetSheetRow(sheet, cellName, &[]any{jpID, jpID}),
-		)
-		cellName = CoordinatesToCellName(3, i*TabelRow+1)
-		simpleUtil.CheckErr(
-			xlsx.SetSheetRow(sheet, cellName, &PanelColTitle),
-		)
-		cellName = CoordinatesToCellName(2, i*TabelRow+2)
-		simpleUtil.CheckErr(
-			xlsx.SetSheetCol(sheet, cellName, &PanelRowTitle),
-		)
-		simpleUtil.CheckErr(
-			xlsx.SetCellStyle(
-				sheet,
-				CoordinatesToCellName(1, i*TabelRow+1),
-				CoordinatesToCellName(14, i*TabelRow+9),
-				bgStyleMap[-1],
-			),
-		)
-		simpleUtil.CheckErr(
-			xlsx.SetCellStyle(
-				sheet,
-				CoordinatesToCellName(2, i*TabelRow+1),
-				CoordinatesToCellName(2, i*TabelRow+9),
-				bgStyleMap[3],
-			),
-		)
-		simpleUtil.CheckErr(
-			xlsx.SetCellStyle(
-				sheet,
-				CoordinatesToCellName(2, i*TabelRow+1),
-				CoordinatesToCellName(14, i*TabelRow+1),
-				bgStyleMap[3],
-			),
-		)
-
-		cloneIndex := 0
-		for j := range segmentIDs {
-			segment := segmentIDs[j]
-			// fmt.Printf("%s\t%c\n", jpID, row)
-			for k := range maxJPClone {
-				row := cloneIndex / PanelCol
-				col := 1 + cloneIndex%PanelCol
-				fromCel := fmt.Sprintf("%c%d", row+'A', col)
-				cloneID := strconv.Itoa(k + 1)
-				segment.FromPanel[cloneID] = fromCel
-				cellName = simpleUtil.HandleError(excelize.CoordinatesToCellName(2+col, row+2+i*TabelRow))
-				ID := fmt.Sprintf("%s-%s", segment.ID, cloneID)
-				simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, ID))
-				if clone, ok := segment.CloneMap[cloneID]; ok {
-					clone.FromCell = fromCel
-					simpleUtil.CheckErr(xlsx.SetCellStyle(sheet, cellName, cellName, bgStyleMap[j%3]))
-				}
-				cloneIndex++
-			}
-		}
-		// 合并单元格
-		simpleUtil.CheckErr(
-			xlsx.MergeCell(
-				sheet,
-				CoordinatesToCellName(1, i*TabelRow+1),
-				CoordinatesToCellName(1, i*TabelRow+9),
-			),
-		)
-
-	}
-	fmt.Println("==END==")
 	simpleUtil.CheckErr(xlsx.DeleteSheet("Sheet1"))
 	simpleUtil.CheckErr(xlsx.SaveAs(*prefix + ".result.xlsx"))
 
 	// 输出2-输出孔图
 	fmt.Println("==输出2-输出孔图==")
-	index = 0
+	index := 0
 	panelID := ""
 	for i, jpPanel := range jps.List {
 		if i%2 == 0 {
