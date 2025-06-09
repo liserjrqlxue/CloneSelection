@@ -10,7 +10,7 @@ import (
 func LoadInput(input string) (JPInfo map[string]*SegmentInfo, JPlist []string, SegmentList map[string][]string) {
 	var (
 		xlsx  = simpleUtil.HandleError(excelize.OpenFile(input))
-		rows  = simpleUtil.HandleError(xlsx.GetRows("胶图判定(人工输入)"))
+		rows  = simpleUtil.HandleError(xlsx.GetRows(InputSheet))
 		title []string
 
 		JPID string
@@ -30,7 +30,7 @@ func LoadInput(input string) (JPInfo map[string]*SegmentInfo, JPlist []string, S
 			}
 		}
 		jpID, ok := item["JP-日期"]
-		if i%4 == 1 {
+		if i%6 == 1 {
 			if !ok {
 				log.Fatalf("JP-日期:A%d empty", i+1)
 			} else {
@@ -40,10 +40,10 @@ func LoadInput(input string) (JPInfo map[string]*SegmentInfo, JPlist []string, S
 			if JPID == "" {
 				log.Fatalf("JP-日期:before A%d empty", i+1)
 			}
-			if !ok {
+			if !ok || jpID == "" {
 				item["JP-日期"] = JPID
 			} else {
-				log.Fatalf("JP-日期:A%d not empty", i+1)
+				log.Fatalf("JP-日期:A%d not empty[%+v]", i+1, item)
 			}
 		}
 		segmentInfo := NewSegmentInfo(item)

@@ -11,8 +11,9 @@ import (
 
 // global
 var (
-	MaxClone  = 12
-	ColName12 []string
+	InputSheet = "胶图判定"
+	MaxClone   = 12
+	ColName12  []string
 
 	// 输出1-清单
 	DetailedListTitle = []string{
