@@ -1,7 +1,6 @@
 package main
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/liserjrqlxue/goUtil/stringsUtil"
@@ -13,6 +12,7 @@ type JPPanel struct {
 	Date     string
 	Segments []*SegmentInfo
 	Gels     [4][25]string
+	GelType  string
 }
 
 type SegmentInfo struct {
@@ -24,7 +24,7 @@ type SegmentInfo struct {
 	T7TermPrimer   bool
 	OtherPrimers   []string
 	Note2Product   string
-	Laddar         string
+	Ladder         string
 	CloneIDs       []string
 	// CloneIDs -> true
 	CloneStatus map[string]bool
@@ -41,7 +41,7 @@ func NewSegmentInfo(item map[string]string) *SegmentInfo {
 		Length:         stringsUtil.Atoi(item["片段长度"]),
 		SequencePrimer: item["测序引物"],
 		Note2Product:   item["备注（to生产）"],
-		Laddar:         item["Laddar"],
+		Ladder:         item["Laddar"],
 		CloneStatus:    make(map[string]bool),
 		FromPanel:      make(map[string]string),
 	}
@@ -58,15 +58,15 @@ func NewSegmentInfo(item map[string]string) *SegmentInfo {
 
 	}
 
-	// 0..23
-	for i := range 24 {
-		cloneID := strconv.Itoa(i + 1)
-		if item[cloneID] == "Y" {
-			segmentInfo.CloneIDs = append(segmentInfo.CloneIDs, cloneID)
-			segmentInfo.CloneStatus[cloneID] = true
-		}
-	}
-	segmentInfo.SequenceCount = min(MaxClone, len(segmentInfo.CloneIDs))
+	// // 0..23
+	// for i := range 24 {
+	// 	cloneID := strconv.Itoa(i + 1)
+	// 	if item[cloneID] == "Y" {
+	// 		segmentInfo.CloneIDs = append(segmentInfo.CloneIDs, cloneID)
+	// 		segmentInfo.CloneStatus[cloneID] = true
+	// 	}
+	// }
+	// segmentInfo.SequenceCount = min(MaxClone, len(segmentInfo.CloneIDs))
 
 	return segmentInfo
 }
