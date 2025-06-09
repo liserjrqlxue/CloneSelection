@@ -5,8 +5,54 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/liserjrqlxue/goUtil/simpleUtil"
 	"github.com/liserjrqlxue/goUtil/stringsUtil"
+	"github.com/xuri/excelize/v2"
 )
+
+type JPs struct {
+	List []*JPPanel
+	Map  map[string]*JPPanel
+}
+
+func (jps *JPs) CreateDetailedList(xlsx *excelize.File, sheet string) {
+	simpleUtil.HandleError(xlsx.NewSheet(sheet))
+
+	// 设置格式
+	xlsx.SetColWidth(sheet, "B", "B", 16)
+	xlsx.SetColWidth(sheet, "D", "F", 16)
+	xlsx.SetColWidth(sheet, "G", "G", 70)
+	xlsx.SetColWidth(sheet, "H", "H", 40)
+
+	// 设置表头
+	index := 0
+	cellName := simpleUtil.HandleError(excelize.CoordinatesToCellName(1, index+1))
+	simpleUtil.CheckErr(
+		xlsx.SetSheetRow(sheet, cellName, &DetailedListTitle),
+	)
+
+	for _, jpPanel := range jps.List {
+		for _, segmentInfo := range jpPanel.Segments {
+			index++
+			cellName = simpleUtil.HandleError(excelize.CoordinatesToCellName(1, index+1))
+			simpleUtil.CheckErr(
+				xlsx.SetSheetRow(
+					sheet, cellName,
+					&[]any{
+						index,
+						segmentInfo.ID,
+						segmentInfo.Length,
+						segmentInfo.SequencePrimer,
+						len(segmentInfo.CloneIDs),
+						segmentInfo.SequenceCount,
+						segmentInfo.ID + "-" + strings.Join(segmentInfo.CloneIDs, "、"),
+						segmentInfo.ID + "-" + strings.Join(segmentInfo.SequenceCloneIDs, "、"),
+					},
+				),
+			)
+		}
+	}
+}
 
 type JPPanel struct {
 	ID        string
@@ -57,7 +103,7 @@ func (jpPanel *JPPanel) Gels2Segments() {
 						ID:    cloneID,
 						Index: index%jpCloneMax + 1,
 					}
-					segment.CloneStatus[cloneID] = clone
+					segment.CloneMap[cloneID] = clone
 				}
 				index++
 			}
@@ -65,9 +111,14 @@ func (jpPanel *JPPanel) Gels2Segments() {
 	}
 
 	// 更新 segment.SequenceCount
+	maxCloneSelect := MaxCloneSelect
+	if jpPanel.TY {
+		maxCloneSelect = MaxCloneSelectTY
+	}
 	for j := range jpPanel.Segments {
 		segment := jpPanel.Segments[j]
-		segment.SequenceCount = min(MaxCloneSelect, len(segment.CloneIDs))
+		segment.SequenceCount = min(maxCloneSelect, len(segment.CloneIDs))
+		segment.SequenceCloneIDs = segment.CloneIDs[:segment.SequenceCount]
 	}
 }
 
@@ -78,7 +129,7 @@ func (jpPanel *JPPanel) AddSegment(item map[string]string) *Segment {
 		Length:         stringsUtil.Atoi(item["片段长度"]),
 		SequencePrimer: item["测序引物"],
 		Note2Product:   item["备注（to生产）"],
-		CloneStatus:    make(map[string]*Clone),
+		CloneMap:       make(map[string]*Clone),
 		FromPanel:      make(map[string]string),
 	}
 
@@ -109,9 +160,10 @@ type Segment struct {
 	Note2Product   string
 	CloneIDs       []string
 	// CloneIDs -> true
-	CloneStatus map[string]*Clone
+	CloneMap map[string]*Clone
 	// 送测克隆数
-	SequenceCount int
+	SequenceCount    int
+	SequenceCloneIDs []string
 	// Cell Name
 	FromPanel map[string]string
 }

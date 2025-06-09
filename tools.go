@@ -8,18 +8,20 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func LoadInput(excel, sheet string) (jpPanelMap map[string]*JPPanel, jpPanelList []string) {
+func LoadInput(excel, sheet string) (jps *JPs) {
 	var (
 		xlsx  = simpleUtil.HandleError(excelize.OpenFile(excel))
 		rows  = simpleUtil.HandleError(xlsx.GetRows(sheet))
 		title []string
 
 		// 存储当前JPPanel
-		jpPanelCurrent *JPPanel
+		current *JPPanel
 		// 检查 segmentID 是否重复
 		segmentInfoMap = make(map[string]bool)
 	)
-	jpPanelMap = make(map[string]*JPPanel)
+	jps = &JPs{
+		Map: make(map[string]*JPPanel),
+	}
 	for i := range rows {
 		// 读取 row[i] -> item
 		if i == 0 {
@@ -39,22 +41,22 @@ func LoadInput(excel, sheet string) (jpPanelMap map[string]*JPPanel, jpPanelList
 			if !ok {
 				log.Fatalf("JP-日期:A%d empty", i+1)
 			} else {
-				jpPanelCurrent = &JPPanel{
+				current = &JPPanel{
 					ID: jpID,
 					TY: isTY.MatchString(item["片段名称"]),
 				}
-				jpPanelMap[jpPanelCurrent.ID] = jpPanelCurrent
-				jpPanelList = append(jpPanelList, jpPanelCurrent.ID)
+				jps.Map[current.ID] = current
+				jps.List = append(jps.List, current)
 			}
 		} else {
-			if jpPanelCurrent == nil || jpPanelCurrent.ID == "" {
+			if current == nil || current.ID == "" {
 				log.Fatalf("JP-日期:before A%d empty", i+1)
 			}
 			if jpID != "" {
 				log.Fatalf("JP-日期:A%d not empty[%+v]", i+1, item)
 			}
-			if item["片段名称"] != "" && jpPanelCurrent.TY != isTY.MatchString(item["片段名称"]) {
-				log.Fatalf("TY冲突[%s:%s]", jpPanelCurrent.ID, item["片段名称"])
+			if item["片段名称"] != "" && current.TY != isTY.MatchString(item["片段名称"]) {
+				log.Fatalf("TY冲突[%s:%s]", current.ID, item["片段名称"])
 			}
 		}
 
@@ -62,7 +64,7 @@ func LoadInput(excel, sheet string) (jpPanelMap map[string]*JPPanel, jpPanelList
 		if j := (i - 1) % MaxSegmentRow; j < 4 {
 			for k := range 25 {
 				col := strconv.Itoa(k + 1)
-				jpPanelCurrent.Gels[j][k] = item[col]
+				current.Gels[j][k] = item[col]
 			}
 		}
 
@@ -71,7 +73,7 @@ func LoadInput(excel, sheet string) (jpPanelMap map[string]*JPPanel, jpPanelList
 			continue
 		}
 
-		segmentInfo := jpPanelCurrent.AddSegment(item)
+		segmentInfo := current.AddSegment(item)
 		if segmentInfoMap[segmentInfo.ID] {
 			log.Fatalf("片段重复:[%d:%s]", i+1, segmentInfo.ID)
 		}

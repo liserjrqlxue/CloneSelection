@@ -84,11 +84,9 @@ func init() {
 }
 
 func main() {
-	var jpPanelMap, jpPanelList = LoadInput(*input, InputSheet)
+	var jps = LoadInput(*input, InputSheet)
 	// 由Gels更新Segment
-	for i := range jpPanelList {
-		jpID := jpPanelList[i]
-		jpPanel := jpPanelMap[jpID]
+	for _, jpPanel := range jps.List {
 		jpPanel.Gels2Segments()
 	}
 
@@ -100,43 +98,7 @@ func main() {
 
 	// 输出1-清单
 	sheet = "清单"
-	simpleUtil.HandleError(xlsx.NewSheet(sheet))
-	xlsx.SetColWidth(sheet, "B", "B", 16)
-	xlsx.SetColWidth(sheet, "D", "F", 16)
-	xlsx.SetColWidth(sheet, "G", "G", 70)
-	xlsx.SetColWidth(sheet, "H", "H", 40)
-	index := 0
-	cellName := simpleUtil.HandleError(excelize.CoordinatesToCellName(1, index+1))
-	simpleUtil.CheckErr(
-		xlsx.SetSheetRow(sheet, cellName, &DetailedListTitle),
-	)
-	for _, jpID := range jpPanelList {
-		jpPanel := jpPanelMap[jpID]
-		maxCloneSelect := MaxCloneSelect
-		if jpPanel.TY {
-			maxCloneSelect = MaxCloneSelectTY
-		}
-		for _, segmentInfo := range jpPanel.Segments {
-			index++
-			cellName = simpleUtil.HandleError(excelize.CoordinatesToCellName(1, index+1))
-			simpleUtil.CheckErr(
-				xlsx.SetSheetRow(
-					sheet, cellName,
-					&[]any{
-						index,
-						segmentInfo.ID,
-						segmentInfo.Length,
-						segmentInfo.SequencePrimer,
-						len(segmentInfo.CloneIDs),
-						min(maxCloneSelect, len(segmentInfo.CloneIDs)),
-						segmentInfo.ID + "-" + strings.Join(segmentInfo.CloneIDs, "、"),
-						segmentInfo.ID + "-" + strings.Join(segmentInfo.CloneIDs[:min(maxCloneSelect, len(segmentInfo.CloneIDs))], "、"),
-					},
-				),
-			)
-		}
-	}
-	fmt.Println("==END==")
+	jps.CreateDetailedList(xlsx, sheet)
 
 	// 输出2-选择孔图
 	sheet = "选择孔图"
@@ -144,15 +106,17 @@ func main() {
 	xlsx.SetColWidth(sheet, "A", "B", 12)
 	xlsx.SetColWidth(sheet, "C", "N", 18)
 	fmt.Println("==输出2-选择孔图==")
-	for i, jpID := range jpPanelList {
-		jpPanel := jpPanelMap[jpID]
+	for i, jpPanel := range jps.List {
+		jpID := jpPanel.ID
 		segmentIDs := jpPanel.Segments
+
 		maxSegment := MaxSegment
 		maxJPClone := MaxJPClone
 		if jpPanel.TY {
 			maxSegment = MaxSegmentTY
 			maxJPClone = MaxJPCloneTY
 		}
+
 		if len(segmentIDs) > maxSegment {
 			log.Fatalf("片段超限[%d > %d][%s:%t][%+v]", len(segmentIDs), maxSegment, jpID, jpPanel.TY, segmentIDs)
 		}
@@ -207,7 +171,7 @@ func main() {
 				cellName = simpleUtil.HandleError(excelize.CoordinatesToCellName(2+col, row+2+i*TabelRow))
 				ID := fmt.Sprintf("%s-%s", segment.ID, cloneID)
 				simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, ID))
-				if clone, ok := segment.CloneStatus[cloneID]; ok {
+				if clone, ok := segment.CloneMap[cloneID]; ok {
 					clone.FromCell = fromCel
 					simpleUtil.CheckErr(xlsx.SetCellStyle(sheet, cellName, cellName, bgStyleMap[j%3]))
 				}
@@ -232,7 +196,7 @@ func main() {
 	fmt.Println("==输出2-输出孔图==")
 	index = 0
 	panelID := ""
-	for i, jpID := range jpPanelList {
+	for i, jpPanel := range jps.List {
 		if i%2 == 0 {
 			// new panel
 			date := time.Now().Format("20050102")
@@ -240,7 +204,6 @@ func main() {
 			fmt.Printf("%s\t片段名称1\t片段名称2\t%s\t%s", panelID, panelID, strings.Join(ColName12, "\t"))
 			index = 0
 		}
-		jpPanel := jpPanelMap[jpID]
 		segmentIDs := jpPanel.Segments
 		for j := range segmentIDs {
 			segmentInfo := segmentIDs[j]
@@ -256,9 +219,7 @@ func main() {
 
 	// 测序YK
 	fmt.Println("==测序YK==")
-	for i := range jpPanelList {
-		jpID := jpPanelList[i]
-		jpPanel := jpPanelMap[jpID]
+	for _, jpPanel := range jps.List {
 		segmentIDs := jpPanel.Segments
 		for j := range segmentIDs {
 			segmentInfo := segmentIDs[j]
