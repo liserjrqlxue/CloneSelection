@@ -41,6 +41,7 @@ func LoadInput(excel, sheet string) (jpPanelMap map[string]*JPPanel, jpPanelList
 			} else {
 				jpPanelCurrent = &JPPanel{
 					ID: jpID,
+					TY: isTY.MatchString(item["片段名称"]),
 				}
 				jpPanelMap[jpPanelCurrent.ID] = jpPanelCurrent
 				jpPanelList = append(jpPanelList, jpPanelCurrent.ID)
@@ -51,6 +52,9 @@ func LoadInput(excel, sheet string) (jpPanelMap map[string]*JPPanel, jpPanelList
 			}
 			if jpID != "" {
 				log.Fatalf("JP-日期:A%d not empty[%+v]", i+1, item)
+			}
+			if jpPanelCurrent.TY != isTY.MatchString(item["片段名称"]) {
+				log.Fatalf("TY冲突[%s:%s]", jpPanelCurrent.ID, item["片段名称"])
 			}
 		}
 

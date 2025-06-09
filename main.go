@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -21,6 +22,8 @@ var (
 	// 胶图 25x4
 	MaxGelCol = 25
 	MaxGelRow = 4
+
+	isTY = regexp.MustCompile(`-TY-\d+`)
 
 	ColName12 []string
 

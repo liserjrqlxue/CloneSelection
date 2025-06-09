@@ -12,6 +12,7 @@ type JPPanel struct {
 	ID        string
 	Index     int
 	Date      string
+	TY        bool
 	Segments  []*Segment
 	Gels      [4][25]string
 	GelLayout string
@@ -33,6 +34,9 @@ func (jpPanel *JPPanel) Gels2Segments() {
 	}
 	if jpPanel.GelLayout == "" {
 		log.Fatalf("Unknown Gels Layout for [%s]:%+v", jpPanel.ID, gels)
+	}
+	if jpPanel.TY {
+		jpPanel.GelLayout += " for TY"
 	}
 
 	// 遍历Gels, 更新 Segment
