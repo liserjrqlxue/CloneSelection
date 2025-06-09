@@ -12,8 +12,17 @@ import (
 // global
 var (
 	InputSheet = "胶图判定"
-	MaxClone   = 12
-	ColName12  []string
+	// 每个JP板的片段个数
+	MaxSegment = 6
+	// 每个片段的克隆个数
+	MaxClone       = 16
+	MaxCloneSelect = 12
+
+	// 胶图 25x4
+	MaxGelCol = 25
+	MaxGelRow = 4
+
+	ColName12 []string
 
 	// 输出1-清单
 	DetailedListTitle = []string{
@@ -52,13 +61,48 @@ func init() {
 		*prefix = strings.TrimSuffix(*input, ".xlsx")
 	}
 
-	for i := range MaxClone {
+	for i := range MaxCloneSelect {
 		ColName12 = append(ColName12, strconv.Itoa(i+1))
 	}
 }
 
 func main() {
 	var jpPanelMap, jpPanelList = LoadInput(*input, InputSheet)
+	// 由Gels更新Segment
+	for i := range jpPanelList {
+		jpID := jpPanelList[i]
+		jpPanel := jpPanelMap[jpID]
+		gels := jpPanel.Gels
+		if gels[0][0] == "/" && gels[1][0] == "/" && gels[2][0] == "/" && gels[3][0] == "/" {
+			jpPanel.GelLayout = "first ladder"
+		}
+		if gels[0][16] == "/" && gels[1][8] == "/" && gels[2][16] == "/" && gels[3][8] == "/" {
+			jpPanel.GelLayout = "partition ladder"
+		}
+		if jpPanel.GelLayout == "" {
+			log.Fatalf("Unknown Gels Layout for [%s]:%+v", jpPanel.ID, gels)
+		}
+		index := 0
+		for j := range MaxGelRow {
+			for k := range MaxGelCol {
+				gel := gels[j][k]
+				if gel != "/" {
+					segmentIndex := index / MaxClone
+					segment := jpPanel.Segments[segmentIndex]
+
+					cloneID := strconv.Itoa(index%MaxClone + 1)
+					segment.CloneIDs = append(segment.CloneIDs, cloneID)
+					segment.CloneStatus[cloneID] = true
+
+					index++
+				}
+			}
+		}
+		for j := range jpPanel.Segments {
+			segment := jpPanel.Segments[j]
+			segment.SequenceCount = min(MaxCloneSelect, len(segment.CloneIDs))
+		}
+	}
 
 	// 输出1-清单
 	fmt.Println("==输出1-清单==")
@@ -75,9 +119,9 @@ func main() {
 				segmentInfo.Length,
 				segmentInfo.SequencePrimer,
 				len(segmentInfo.CloneIDs),
-				min(MaxClone, len(segmentInfo.CloneIDs)),
+				min(MaxCloneSelect, len(segmentInfo.CloneIDs)),
 				segmentInfo.ID+"-"+strings.Join(segmentInfo.CloneIDs, "、"),
-				segmentInfo.ID+"-"+strings.Join(segmentInfo.CloneIDs[:min(MaxClone, len(segmentInfo.CloneIDs))], "、"),
+				segmentInfo.ID+"-"+strings.Join(segmentInfo.CloneIDs[:min(MaxCloneSelect, len(segmentInfo.CloneIDs))], "、"),
 			)
 		}
 	}
@@ -107,14 +151,14 @@ func main() {
 			// }
 			row := 'A' + j*2
 			fmt.Printf("%s\t%c\n", jpID, row)
-			for k := range MaxClone {
+			for k := range MaxCloneSelect {
 				cloneID := strconv.Itoa(k + 1)
 				segmentInfo.FromPanel[cloneID] = fmt.Sprintf("%c%d", row, k+1)
 				fmt.Printf("\t%s:%s-%s:%t", segmentInfo.FromPanel[cloneID], segmentInfo.ID, cloneID, segmentInfo.CloneStatus[cloneID])
 			}
 			fmt.Printf("%s\t%c", jpID, 'A'+j*2+1)
-			for k := range MaxClone {
-				cloneID := strconv.Itoa(k + 1 + MaxClone)
+			for k := range MaxCloneSelect {
+				cloneID := strconv.Itoa(k + 1 + MaxCloneSelect)
 				segmentInfo.FromPanel[cloneID] = fmt.Sprintf("%c%d", row, k+1)
 				fmt.Printf("\t%s:%s-%s:%t", segmentInfo.FromPanel[cloneID], segmentInfo.ID, cloneID, segmentInfo.CloneStatus[cloneID])
 			}

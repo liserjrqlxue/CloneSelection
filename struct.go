@@ -7,12 +7,12 @@ import (
 )
 
 type JPPanel struct {
-	ID       string
-	Index    int
-	Date     string
-	Segments []*SegmentInfo
-	Gels     [4][25]string
-	GelType  string
+	ID        string
+	Index     int
+	Date      string
+	Segments  []*SegmentInfo
+	Gels      [4][25]string
+	GelLayout string
 }
 
 type SegmentInfo struct {
@@ -57,16 +57,6 @@ func NewSegmentInfo(item map[string]string) *SegmentInfo {
 		}
 
 	}
-
-	// // 0..23
-	// for i := range 24 {
-	// 	cloneID := strconv.Itoa(i + 1)
-	// 	if item[cloneID] == "Y" {
-	// 		segmentInfo.CloneIDs = append(segmentInfo.CloneIDs, cloneID)
-	// 		segmentInfo.CloneStatus[cloneID] = true
-	// 	}
-	// }
-	// segmentInfo.SequenceCount = min(MaxClone, len(segmentInfo.CloneIDs))
 
 	return segmentInfo
 }
