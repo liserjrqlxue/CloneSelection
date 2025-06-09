@@ -7,6 +7,14 @@ import (
 	"github.com/liserjrqlxue/goUtil/stringsUtil"
 )
 
+type JPPanel struct {
+	ID       string
+	Index    int
+	Date     string
+	Segments []*SegmentInfo
+	Gels     [4][25]string
+}
+
 type SegmentInfo struct {
 	ID             string
 	JPID           string

@@ -7,17 +7,17 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func LoadInput(input string) (JPInfo map[string]*SegmentInfo, JPlist []string, SegmentList map[string][]string) {
+func LoadInput(excel, sheet string) (jpPanelMap map[string]*JPPanel, jpPanelList []string) {
 	var (
-		xlsx  = simpleUtil.HandleError(excelize.OpenFile(input))
-		rows  = simpleUtil.HandleError(xlsx.GetRows(InputSheet))
+		xlsx  = simpleUtil.HandleError(excelize.OpenFile(excel))
+		rows  = simpleUtil.HandleError(xlsx.GetRows(sheet))
 		title []string
 
-		JPID string
-		// JPID -> []string
+		jpPanel *JPPanel
+		// 检查 segmentID 是否重复
+		segmentInfoMap = make(map[string]bool)
 	)
-	JPInfo = make(map[string]*SegmentInfo)
-	SegmentList = make(map[string][]string)
+	jpPanelMap = make(map[string]*JPPanel)
 	for i := range rows {
 		if i == 0 {
 			title = rows[0]
@@ -34,25 +34,28 @@ func LoadInput(input string) (JPInfo map[string]*SegmentInfo, JPlist []string, S
 			if !ok {
 				log.Fatalf("JP-日期:A%d empty", i+1)
 			} else {
-				JPID = jpID
+				jpPanel = &JPPanel{
+					ID: jpID,
+				}
+				jpPanelMap[jpPanel.ID] = jpPanel
+				jpPanelList = append(jpPanelList, jpPanel.ID)
 			}
 		} else {
-			if JPID == "" {
+			if jpPanel == nil || jpPanel.ID == "" {
 				log.Fatalf("JP-日期:before A%d empty", i+1)
 			}
 			if !ok || jpID == "" {
-				item["JP-日期"] = JPID
+				item["JP-日期"] = jpPanel.ID
 			} else {
 				log.Fatalf("JP-日期:A%d not empty[%+v]", i+1, item)
 			}
 		}
 		segmentInfo := NewSegmentInfo(item)
-		if _, ok := JPInfo[segmentInfo.ID]; ok {
+		if segmentInfoMap[segmentInfo.ID] {
 			log.Fatalf("片段重复:[%d:%s]", i+1, segmentInfo.ID)
 		}
-		JPInfo[segmentInfo.ID] = segmentInfo
-		SegmentList[JPID] = append(SegmentList[JPID], segmentInfo.ID)
-		JPlist = append(JPlist, JPID)
+		segmentInfoMap[segmentInfo.ID] = true
+		jpPanel.Segments = append(jpPanel.Segments, segmentInfo)
 	}
 	return
 }

@@ -58,21 +58,15 @@ func init() {
 }
 
 func main() {
-	var (
-		JPInfo map[string]*SegmentInfo
-		// JPID -> []string
-		SegmentList map[string][]string
-		JPlist      []string
-	)
-	JPInfo, JPlist, SegmentList = LoadInput(*input)
+	var jpPanelMap, jpPanelList = LoadInput(*input, InputSheet)
 
 	// 输出1-清单
 	fmt.Println("==输出1-清单==")
 	fmt.Println(strings.Join(DetailedListTitle, "\t"))
 	i := 0
-	for _, jpID := range JPlist {
-		for _, segmentID := range SegmentList[jpID] {
-			segmentInfo := JPInfo[segmentID]
+	for _, jpID := range jpPanelList {
+		jpPanel := jpPanelMap[jpID]
+		for _, segmentInfo := range jpPanel.Segments {
 			i++
 			fmt.Printf(
 				"%d\t%s\t%d\t%s\t%d\t%d\t%s\t%s\n",
@@ -91,23 +85,23 @@ func main() {
 
 	// 输出2-选择孔图
 	fmt.Println("==输出2-选择孔图==")
-	for _, jpID := range JPlist {
-		segmentIDs := SegmentList[jpID]
-		if len(segmentIDs) > 4 {
+	for _, jpID := range jpPanelList {
+		jpPanel := jpPanelMap[jpID]
+		segmentIDs := jpPanel.Segments
+		if len(segmentIDs) > 6 {
 			log.Fatalf("片段超限[%s][%+v]", jpID, segmentIDs)
 		}
 
 		fmt.Printf("%s\t%s\t%s", jpID, jpID, strings.Join(ColName12, "\t"))
 		fmt.Println()
 
-		for j := range 4 {
+		for j := range 6 {
 			if j >= len(segmentIDs) {
 				fmt.Printf("%s\t%c\n", jpID, 'A'+j*2)
 				fmt.Printf("%s\t%c\n", jpID, 'A'+j*2+1)
 				continue
 			}
-			segmentID := segmentIDs[j]
-			segmentInfo := JPInfo[segmentID]
+			segmentInfo := segmentIDs[j]
 			// for k:=range 24{
 			// 	row:='A'+j*2+k/12
 			// }
@@ -116,13 +110,13 @@ func main() {
 			for k := range MaxClone {
 				cloneID := strconv.Itoa(k + 1)
 				segmentInfo.FromPanel[cloneID] = fmt.Sprintf("%c%d", row, k+1)
-				fmt.Printf("\t%s:%s-%s:%t", segmentInfo.FromPanel[cloneID], segmentID, cloneID, segmentInfo.CloneStatus[cloneID])
+				fmt.Printf("\t%s:%s-%s:%t", segmentInfo.FromPanel[cloneID], segmentInfo.ID, cloneID, segmentInfo.CloneStatus[cloneID])
 			}
 			fmt.Printf("%s\t%c", jpID, 'A'+j*2+1)
 			for k := range MaxClone {
 				cloneID := strconv.Itoa(k + 1 + MaxClone)
 				segmentInfo.FromPanel[cloneID] = fmt.Sprintf("%c%d", row, k+1)
-				fmt.Printf("\t%s:%s-%s:%t", segmentInfo.FromPanel[cloneID], segmentID, cloneID, segmentInfo.CloneStatus[cloneID])
+				fmt.Printf("\t%s:%s-%s:%t", segmentInfo.FromPanel[cloneID], segmentInfo.ID, cloneID, segmentInfo.CloneStatus[cloneID])
 			}
 		}
 	}
@@ -132,7 +126,7 @@ func main() {
 	fmt.Println("==输出2-输出孔图==")
 	index := 0
 	panelID := ""
-	for i, jpID := range JPlist {
+	for i, jpID := range jpPanelList {
 		if i%2 == 0 {
 			// new panel
 			date := time.Now().Format("20050102")
@@ -140,14 +134,14 @@ func main() {
 			fmt.Printf("%s\t片段名称1\t片段名称2\t%s\t%s", panelID, panelID, strings.Join(ColName12, "\t"))
 			index = 0
 		}
-		segmentIDs := SegmentList[jpID]
+		jpPanel := jpPanelMap[jpID]
+		segmentIDs := jpPanel.Segments
 		for j := range segmentIDs {
-			segmentID := segmentIDs[j]
-			fmt.Printf("%s\t%s\t/\t%c", panelID, segmentID, 'A'+index)
-			segmentInfo := JPInfo[segmentID]
+			segmentInfo := segmentIDs[j]
+			fmt.Printf("%s\t%s\t/\t%c", panelID, segmentInfo.ID, 'A'+index)
 			for k := range segmentInfo.CloneIDs {
 				cloneID := segmentInfo.CloneIDs[k]
-				fmt.Printf("\t%s-%s", segmentID, cloneID)
+				fmt.Printf("\t%s-%s", segmentInfo.ID, cloneID)
 			}
 			index++
 		}
@@ -156,15 +150,15 @@ func main() {
 
 	// 测序YK
 	fmt.Println("==测序YK==")
-	for i := range JPlist {
-		jpID := JPlist[i]
-		segmentIDs := SegmentList[jpID]
+	for i := range jpPanelList {
+		jpID := jpPanelList[i]
+		jpPanel := jpPanelMap[jpID]
+		segmentIDs := jpPanel.Segments
 		for j := range segmentIDs {
-			segmentID := segmentIDs[j]
-			segmentInfo := JPInfo[segmentID]
+			segmentInfo := segmentIDs[j]
 			for k := range segmentInfo.CloneIDs {
 				cloneID := segmentInfo.CloneIDs[k]
-				ID := fmt.Sprintf("%s-%s", segmentID, cloneID)
+				ID := fmt.Sprintf("%s-%s", segmentInfo.ID, cloneID)
 				segmentLength := "1-1000"
 				if segmentInfo.Length > 1000 {
 					segmentLength = "1001-2000"
