@@ -48,13 +48,13 @@ func (jpPanel *JPPanel) Gels2Segments() {
 		for k := range MaxGelCol {
 			gel := gels[j][k]
 			if gel != "/" {
-				segmentIndex := index / jpCloneMax
-				cloneID := strconv.Itoa(index%jpCloneMax + 1)
-
-				segment := jpPanel.Segments[segmentIndex]
-				segment.CloneIDs = append(segment.CloneIDs, cloneID)
-				segment.CloneStatus[cloneID] = true
-
+				if gel == "Y" {
+					segmentIndex := index / jpCloneMax
+					segment := jpPanel.Segments[segmentIndex]
+					cloneID := strconv.Itoa(index%jpCloneMax + 1)
+					segment.CloneIDs = append(segment.CloneIDs, cloneID)
+					segment.CloneStatus[cloneID] = true
+				}
 				index++
 			}
 		}
