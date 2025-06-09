@@ -207,7 +207,8 @@ func main() {
 				cellName = simpleUtil.HandleError(excelize.CoordinatesToCellName(2+col, row+2+i*TabelRow))
 				ID := fmt.Sprintf("%s-%s", segment.ID, cloneID)
 				simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, ID))
-				if segment.CloneStatus[cloneID] {
+				if clone, ok := segment.CloneStatus[cloneID]; ok {
+					clone.FromCell = fromCel
 					simpleUtil.CheckErr(xlsx.SetCellStyle(sheet, cellName, cellName, bgStyleMap[j%3]))
 				}
 				cloneIndex++

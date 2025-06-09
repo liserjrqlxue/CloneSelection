@@ -53,7 +53,11 @@ func (jpPanel *JPPanel) Gels2Segments() {
 					segment := jpPanel.Segments[segmentIndex]
 					cloneID := strconv.Itoa(index%jpCloneMax + 1)
 					segment.CloneIDs = append(segment.CloneIDs, cloneID)
-					segment.CloneStatus[cloneID] = true
+					clone := &Clone{
+						ID:    cloneID,
+						Index: index%jpCloneMax + 1,
+					}
+					segment.CloneStatus[cloneID] = clone
 				}
 				index++
 			}
@@ -74,7 +78,7 @@ func (jpPanel *JPPanel) AddSegment(item map[string]string) *Segment {
 		Length:         stringsUtil.Atoi(item["片段长度"]),
 		SequencePrimer: item["测序引物"],
 		Note2Product:   item["备注（to生产）"],
-		CloneStatus:    make(map[string]bool),
+		CloneStatus:    make(map[string]*Clone),
 		FromPanel:      make(map[string]string),
 	}
 
@@ -105,9 +109,16 @@ type Segment struct {
 	Note2Product   string
 	CloneIDs       []string
 	// CloneIDs -> true
-	CloneStatus map[string]bool
+	CloneStatus map[string]*Clone
 	// 送测克隆数
 	SequenceCount int
 	// Cell Name
 	FromPanel map[string]string
+}
+
+type Clone struct {
+	Index    int
+	ID       string
+	FromCell string
+	ToCell   string
 }
