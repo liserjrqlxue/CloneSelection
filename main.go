@@ -169,6 +169,30 @@ func main() {
 		simpleUtil.CheckErr(
 			xlsx.SetSheetCol(sheet, cellName, &PanelRowTitle),
 		)
+		simpleUtil.CheckErr(
+			xlsx.SetCellStyle(
+				sheet,
+				CoordinatesToCellName(1, i*TabelRow+1),
+				CoordinatesToCellName(14, i*TabelRow+9),
+				bgStyleMap[-1],
+			),
+		)
+		simpleUtil.CheckErr(
+			xlsx.SetCellStyle(
+				sheet,
+				CoordinatesToCellName(2, i*TabelRow+1),
+				CoordinatesToCellName(2, i*TabelRow+9),
+				bgStyleMap[3],
+			),
+		)
+		simpleUtil.CheckErr(
+			xlsx.SetCellStyle(
+				sheet,
+				CoordinatesToCellName(2, i*TabelRow+1),
+				CoordinatesToCellName(14, i*TabelRow+1),
+				bgStyleMap[3],
+			),
+		)
 
 		cloneIndex := 0
 		for j := range segmentIDs {
@@ -189,6 +213,15 @@ func main() {
 				cloneIndex++
 			}
 		}
+		// 合并单元格
+		simpleUtil.CheckErr(
+			xlsx.MergeCell(
+				sheet,
+				CoordinatesToCellName(1, i*TabelRow+1),
+				CoordinatesToCellName(1, i*TabelRow+9),
+			),
+		)
+
 	}
 	fmt.Println("==END==")
 	simpleUtil.CheckErr(xlsx.DeleteSheet("Sheet1"))
