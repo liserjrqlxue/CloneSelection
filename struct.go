@@ -16,6 +16,19 @@ import (
 type JPs struct {
 	List []*JPPanel
 	Map  map[string]*JPPanel
+
+	SCs []*Segment
+	TYs []*Segment
+}
+
+func (jps *JPs) SplitList() {
+	for _, jpPanel := range jps.List {
+		if jpPanel.TY {
+			jps.TYs = append(jps.TYs, jpPanel.Segments...)
+		} else {
+			jps.SCs = append(jps.SCs, jpPanel.Segments...)
+		}
+	}
 }
 
 func (jps *JPs) CreateDetailedList(xlsx *excelize.File, sheet string) {
@@ -74,8 +87,6 @@ func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[
 	xlsx.SetColWidth(sheet, "E", "P", 18)
 
 	var (
-		TYs  []*Segment
-		SCs  []*Segment
 		date = jps.List[0].Date
 
 		panelID      string
@@ -83,15 +94,8 @@ func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[
 		panelSCIndex = -1
 		panelTYIndex = -1
 	)
-	for _, jpPanel := range jps.List {
-		if jpPanel.TY {
-			TYs = append(TYs, jpPanel.Segments...)
-		} else {
-			SCs = append(SCs, jpPanel.Segments...)
-		}
-	}
 
-	for i, segment := range SCs {
+	for i, segment := range jps.SCs {
 		var (
 			// 板内片段序号, 也是克隆列号
 			segmentIndex = i % MaxSegmentSelectSC
@@ -127,7 +131,7 @@ func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[
 
 	panelSCIndex++
 
-	for i, segment := range TYs {
+	for i, segment := range jps.TYs {
 		var (
 			rowOffset = (panelTYIndex + panelSCIndex) * TabelRow
 			// 板内片段序号, %PanelRow 也是克隆行号
@@ -159,6 +163,11 @@ func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[
 			simpleUtil.CheckErr(xlsx.SetCellStr(sheet, toCell, clone.Name))
 		}
 	}
+}
+
+func (jps *JPs) CreateYK(xlsx *excelize.File, sheet string) {
+	InitYK(xlsx, sheet)
+
 }
 
 type JPPanel struct {
