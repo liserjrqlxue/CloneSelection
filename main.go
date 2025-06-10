@@ -73,6 +73,21 @@ var (
 		"*引物名称",
 		"*自备引物",
 	}
+
+	// 测序GWZ
+	GWZTitle = []string{
+		"样品编号",
+		"*样品名称",
+		"*片段长度(bp)",
+		"*载体名称及抗性",
+		"通用引物1",
+		"通用引物2",
+		`自备引物(如有多个请用分号";"隔开)`,
+		"特殊要求",
+		"测通",
+		"返还样品",
+		"样品备注（可备注具体片段长度）",
+	}
 )
 
 // flag
@@ -133,6 +148,10 @@ func main() {
 	// 测序YK
 	sheet = "测序YK"
 	jps.CreateYK(xlsx, sheet, bgStyleMap)
+
+	// 测序GWZ
+	sheet = "测序GWZ"
+	jps.CreateGWZ(xlsx, sheet, bgStyleMap)
 
 	simpleUtil.CheckErr(xlsx.DeleteSheet("Sheet1"))
 	simpleUtil.CheckErr(xlsx.SaveAs(*prefix + ".result.xlsx"))

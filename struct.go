@@ -242,6 +242,72 @@ func (jps *JPs) CreateYK(xlsx *excelize.File, sheet string, bgStyleMap map[int]i
 	InitYK(xlsx, sheet, rIdx, bgStyleMap)
 }
 
+func (jps *JPs) CreateGWZ(xlsx *excelize.File, sheet string, bgStyleMap map[int]int) {
+	simpleUtil.HandleError(xlsx.NewSheet(sheet))
+
+	var index = 0
+	for _, segment := range jps.SCs {
+		var (
+			segmentLength = ""
+
+			otherPrimers = strings.Join(segment.OtherPrimers, ";")
+			T7           = ""
+			T7Term       = ""
+		)
+
+		var length500 = (segment.Length - 1) / 500
+		switch length500 {
+		case 0, 1:
+			segmentLength = "1-1000"
+		case 2:
+			segmentLength = "1001-1500"
+		case 3:
+			segmentLength = "1501-2000"
+		case 4:
+			segmentLength = "2001-2500"
+		case 5:
+			segmentLength = "2501-3000"
+		case 6:
+			segmentLength = "3001-3500"
+		case 7:
+			segmentLength = "3501-4000"
+		default:
+			segmentLength = ">4000"
+		}
+
+		if segment.T7Primer {
+			T7 = "T7"
+		}
+		if segment.T7TermPrimer {
+			T7Term = "T7ter"
+		}
+
+		for _, cloneID := range segment.SequenceCloneIDs {
+			index++
+			cellName := CoordinatesToCellName(1, index+1)
+
+			clone := segment.CloneMap[cloneID]
+			simpleUtil.CheckErr(
+				xlsx.SetSheetRow(
+					sheet, cellName,
+					&[]any{
+						index,
+						clone.Name,
+						segmentLength,
+						"",
+						T7,
+						T7Term,
+						otherPrimers,
+						"", "否", "否",
+						segment.Length,
+					},
+				),
+			)
+		}
+	}
+	InitGWZ(xlsx, sheet, index+1, bgStyleMap)
+}
+
 type JPPanel struct {
 	ID        string
 	Index     int
