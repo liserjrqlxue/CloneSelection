@@ -348,7 +348,7 @@ func (jpPanel *JPPanel) AddSegment(item map[string]string) *Segment {
 		switch primer {
 		case "T7":
 			segment.T7Primer = true
-		case "T7-Term":
+		case "T7term":
 			segment.T7TermPrimer = true
 		default:
 			segment.OtherPrimers = append(segment.OtherPrimers, primer)
