@@ -99,3 +99,13 @@ func SetCellStyle(xlsx *excelize.File, sheet string, hCol, hRow, vCol, vRow, sty
 	var vCell = CoordinatesToCellName(vCol, vRow)
 	simpleUtil.CheckErr(xlsx.SetCellStyle(sheet, hCell, vCell, styleID))
 }
+
+func MergeCell(xlsx *excelize.File, sheet string, topLeftCol, topLeftRow, bottomRightCol, bottomRightRow int) {
+	simpleUtil.CheckErr(
+		xlsx.MergeCell(
+			sheet,
+			CoordinatesToCellName(topLeftCol, topLeftRow),
+			CoordinatesToCellName(bottomRightCol, bottomRightRow),
+		),
+	)
+}
