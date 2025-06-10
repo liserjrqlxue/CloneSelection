@@ -80,7 +80,7 @@ func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[
 
 		panelID    string
 		cellName   string
-		tableIndex = -1
+		panelIndex = 0
 	)
 	for _, jpPanel := range jps.List {
 		if jpPanel.TY {
@@ -91,79 +91,31 @@ func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[
 	}
 
 	for i, segment := range SCs {
+		var (
+			rowOffset = panelIndex * TabelRow
+		)
 
 		// 板内片段序号, 也是克隆列号
 		segmentIndex := i % MaxSegmentSelectSC
 		// 初始化输出板
 		if segmentIndex == 0 {
-			tableIndex++
-			panelID = fmt.Sprintf("%s-SC%d", date, tableIndex+1)
+			panelID = fmt.Sprintf("%s-SC%d", date, panelIndex+1)
+			InitToPanel(xlsx, sheet, panelID, rowOffset, bgStyleMap)
 
-			// 行标题
-			cellName = CoordinatesToCellName(1, tableIndex*TabelRow+1)
-			simpleUtil.CheckErr(
-				xlsx.SetSheetRow(
-					sheet, cellName,
-					&[]any{panelID, "片段名称1", "片段名称2", panelID},
-				),
-			)
-			cellName = CoordinatesToCellName(5, tableIndex*TabelRow+1)
-			simpleUtil.CheckErr(
-				xlsx.SetSheetRow(sheet, cellName, &PanelColTitle),
-			)
-
-			// 列标题
-			cellName = CoordinatesToCellName(4, tableIndex*TabelRow+2)
-			simpleUtil.CheckErr(
-				xlsx.SetSheetCol(sheet, cellName, &PanelRowTitle),
-			)
-
-			// 合并单元格
-			simpleUtil.CheckErr(
-				xlsx.MergeCell(
-					sheet,
-					CoordinatesToCellName(1, tableIndex*TabelRow+1),
-					CoordinatesToCellName(1, tableIndex*TabelRow+PanelRow+1),
-				),
-			)
-
-			// 格式
-			simpleUtil.CheckErr(
-				xlsx.SetCellStyle(
-					sheet,
-					CoordinatesToCellName(1, tableIndex*TabelRow+1),
-					CoordinatesToCellName(16, tableIndex*TabelRow+9),
-					bgStyleMap[-1],
-				),
-			)
-			simpleUtil.CheckErr(
-				xlsx.SetCellStyle(
-					sheet,
-					CoordinatesToCellName(4, tableIndex*TabelRow+1),
-					CoordinatesToCellName(4, tableIndex*TabelRow+9),
-					bgStyleMap[3],
-				),
-			)
-			simpleUtil.CheckErr(
-				xlsx.SetCellStyle(
-					sheet,
-					CoordinatesToCellName(4, tableIndex*TabelRow+1),
-					CoordinatesToCellName(16, tableIndex*TabelRow+1),
-					bgStyleMap[3],
-				),
-			)
+			// 更新为下一板的index
+			panelIndex++
 		}
 
 		cellName = CoordinatesToCellName(
 			segmentIndex/PanelRow+2,
-			tableIndex*TabelRow+segmentIndex%PanelRow+2,
+			rowOffset+segmentIndex%PanelRow+2,
 		)
 		simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, segment.ID))
 		for j, cloneID := range segment.SequenceCloneIDs {
 			clone := segment.CloneMap[cloneID]
 			toCell := CoordinatesToCellName(
 				segmentIndex+5,
-				tableIndex*TabelRow+j+2,
+				rowOffset+j+2,
 			)
 			clone.ToPanel = panelID
 			clone.ToCell = toCell

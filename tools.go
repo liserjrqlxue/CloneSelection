@@ -91,3 +91,67 @@ func LoadInput(excel, sheet string) (jps *JPs) {
 	}
 	return
 }
+
+func InitToPanel(xlsx *excelize.File, sheet, panelID string, rowOffset int, bgStyleMap map[int]int) {
+	var (
+		cellName string
+
+		startRow = 1 + rowOffset
+		endRow   = startRow + PanelRow
+	)
+
+	// Table格式
+	simpleUtil.CheckErr(
+		xlsx.SetCellStyle(
+			sheet,
+			CoordinatesToCellName(1, startRow),
+			CoordinatesToCellName(PanelCol+4, endRow),
+			bgStyleMap[-1],
+		),
+	)
+
+	// 行标题
+	cellName = CoordinatesToCellName(1, startRow)
+	simpleUtil.CheckErr(
+		xlsx.SetSheetRow(
+			sheet, cellName,
+			&[]any{panelID, "片段名称1", "片段名称2", panelID},
+		),
+	)
+	cellName = CoordinatesToCellName(5, startRow)
+	simpleUtil.CheckErr(
+		xlsx.SetSheetRow(sheet, cellName, &PanelColTitle),
+	)
+	simpleUtil.CheckErr(
+		xlsx.SetCellStyle(
+			sheet,
+			CoordinatesToCellName(4, startRow),
+			CoordinatesToCellName(16, startRow),
+			bgStyleMap[3],
+		),
+	)
+
+	// 列标题
+	cellName = CoordinatesToCellName(4, startRow+1)
+	simpleUtil.CheckErr(
+		xlsx.SetSheetCol(sheet, cellName, &PanelRowTitle),
+	)
+	simpleUtil.CheckErr(
+		xlsx.SetCellStyle(
+			sheet,
+			CoordinatesToCellName(4, startRow),
+			CoordinatesToCellName(4, endRow),
+			bgStyleMap[3],
+		),
+	)
+
+	// 合并单元格
+	simpleUtil.CheckErr(
+		xlsx.MergeCell(
+			sheet,
+			CoordinatesToCellName(1, startRow),
+			CoordinatesToCellName(1, endRow),
+		),
+	)
+
+}
