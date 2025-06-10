@@ -11,6 +11,7 @@ var (
 	bgColor2   = "#FCE4D6"
 	bgColor3   = "#E2EFDA"
 	bgGreen60  = "#C6E0B4"
+	bgWhite15  = "#D9D9D9"
 	tableStyle = excelize.Style{
 		Border: []excelize.Border{
 			{Type: "left", Color: "000000", Style: 1},
@@ -63,6 +64,18 @@ var (
 			Bold: true,
 		},
 	}
+	bgStyleWhite15 = excelize.Style{
+		Border:    tableStyle.Border,
+		Alignment: tableStyle.Alignment,
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{bgWhite15},
+			Pattern: 1,
+		},
+		Font: &excelize.Font{
+			Bold: true,
+		},
+	}
 )
 
 func NewStyle(xlsx *excelize.File, style *excelize.Style) (styleID int) {
@@ -78,12 +91,14 @@ func CreateStyles(xlsx *excelize.File) map[int]int {
 		bgStyle2ID       = NewStyle(xlsx, &bgStyle2)
 		bgStyle3ID       = NewStyle(xlsx, &bgStyle3)
 		bgStyleGreen60ID = NewStyle(xlsx, &bgStyleGreen60)
+		bgStyleWhite15ID = NewStyle(xlsx, &bgStyleWhite15)
 		bgStyleMap       = map[int]int{
 			-1: tableStyleID,
 			0:  bgStyle1ID,
 			1:  bgStyle2ID,
 			2:  bgStyle3ID,
 			3:  bgStyleGreen60ID,
+			4:  bgStyleWhite15ID,
 		}
 	)
 	return bgStyleMap

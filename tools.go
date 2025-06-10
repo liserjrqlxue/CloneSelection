@@ -177,6 +177,15 @@ func InitYK(xlsx *excelize.File, sheet string, endRow int, bgStyleMap map[int]in
 			bgStyleMap[-1],
 		),
 	)
+	// 表头背景
+	simpleUtil.CheckErr(
+		xlsx.SetCellStyle(
+			sheet,
+			CoordinatesToCellName(1, 1),
+			CoordinatesToCellName(10, 2),
+			bgStyleMap[4],
+		),
+	)
 
 	// 设置表头
 	cellName = CoordinatesToCellName(1, 1)
