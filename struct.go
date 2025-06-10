@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/liserjrqlxue/goUtil/osUtil"
 	"github.com/liserjrqlxue/goUtil/simpleUtil"
 	"github.com/liserjrqlxue/goUtil/stringsUtil"
 	"github.com/xuri/excelize/v2"
@@ -20,19 +21,34 @@ type BioHandler struct {
 }
 
 type Transfer struct {
-	SourcePlateLable      int
-	SourceWellPosition    string
-	DesPlateLable         int
-	DesWellPosition       string
-	Volume                int
-	BarCode               string
-	ChangeTip             int
+	SourcePlateLable   int
+	SourceWellPosition string
+	DesPlateLable      int
+	DesWellPosition    string
+
+	Volume    int
+	BarCode   string
+	ChangeTip int
+
 	PreAspirateMixNumber  int
 	PreAspirateMixVolume  int
 	PostDispenseMixNumber int
 	PostDispenseMixVolume int
-	LiquidClass           string
-	Pause                 int
+
+	LiquidClass string
+	Pause       int
+}
+
+func (t *Transfer) String() string {
+	return fmt.Sprintf(
+		"%d,%s,%d,%s,%d,%s,%d,%d,%d,%d,%d,%s,%d",
+		t.SourcePlateLable, t.SourceWellPosition,
+		t.DesPlateLable, t.DesWellPosition,
+		t.Volume, t.BarCode, t.ChangeTip,
+		t.PreAspirateMixNumber, t.PreAspirateMixVolume,
+		t.PreAspirateMixNumber, t.PreAspirateMixVolume,
+		t.LiquidClass, t.Pause,
+	)
 }
 
 type JPs struct {
@@ -328,6 +344,57 @@ func (jps *JPs) CreateGWZ(xlsx *excelize.File, sheet string, bgStyleMap map[int]
 		}
 	}
 	InitGWZ(xlsx, sheet, index+1, bgStyleMap)
+}
+
+func (jps *JPs) CreateBioHandler() *BioHandler {
+	var (
+		nextSourceLabel = 3
+		nextDesLabel    = 13
+
+		PlateLabelMap = make(map[string]int)
+		bh            = &BioHandler{}
+	)
+	for _, jpPanel := range jps.List {
+		for _, segment := range jpPanel.Segments {
+			for _, cloneID := range segment.SequenceCloneIDs {
+				clone := segment.CloneMap[cloneID]
+				sourcePlateLabel, ok := PlateLabelMap[clone.FromPanel]
+				if !ok {
+					sourcePlateLabel = nextSourceLabel
+					nextSourceLabel++
+					PlateLabelMap[clone.FromPanel] = sourcePlateLabel
+					bh.SourcePlate = append(bh.SourcePlate, clone.FromPanel)
+				}
+				desPlateLabel, ok := PlateLabelMap[clone.ToPanel]
+				if !ok {
+					desPlateLabel = nextDesLabel
+					nextDesLabel++
+					PlateLabelMap[clone.ToPanel] = desPlateLabel
+					bh.DesPlate = append(bh.DesPlate, clone.ToPanel)
+				}
+				clone.UpdateTransfer(sourcePlateLabel, desPlateLabel)
+			}
+		}
+	}
+
+	bh.PlateLabel = PlateLabelMap
+
+	return bh
+}
+
+func (jps *JPs) WriteTransfer(path string) {
+	var out = osUtil.Create(path)
+	defer simpleUtil.DeferClose(out)
+
+	simpleUtil.HandleError(out.WriteString(TransferTitle + "\n"))
+	for _, jpPanel := range jps.List {
+		for _, segment := range jpPanel.Segments {
+			for _, cloneID := range segment.SequenceCloneIDs {
+				clone := segment.CloneMap[cloneID]
+				simpleUtil.HandleError(out.WriteString(clone.Transfer.String() + "\n"))
+			}
+		}
+	}
 }
 
 type JPPanel struct {

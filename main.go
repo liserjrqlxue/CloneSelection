@@ -88,6 +88,9 @@ var (
 		"返还样品",
 		"样品备注（可备注具体片段长度）",
 	}
+
+	// Transfer
+	TransferTitle = "SourcePlateLable,SourceWellPosition,DesPlateLable,DesWellPosition,Volume,BarCode,ChangeTip,PreAspirateMixNumber,PreAspirateMixVolume,PostDispenseMixNumber,PostDispenseMixVolume,LiquidClass,Pause"
 )
 
 // flag
@@ -155,4 +158,8 @@ func main() {
 
 	simpleUtil.CheckErr(xlsx.DeleteSheet("Sheet1"))
 	simpleUtil.CheckErr(xlsx.SaveAs(*prefix + ".result.xlsx"))
+
+	bh := jps.CreateBioHandler()
+	jps.WriteTransfer(*prefix + ".Transfer.csv")
+	log.Printf("%+v\n", bh)
 }
