@@ -92,6 +92,7 @@ func LoadInput(excel, sheet string) (jps *JPs) {
 	return
 }
 
+// 初始化输出孔图的PanelTable
 func InitToPanel(xlsx *excelize.File, sheet, panelID string, rowOffset int, bgStyleMap map[int]int) {
 	var (
 		cellName string

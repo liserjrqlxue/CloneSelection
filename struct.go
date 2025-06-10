@@ -78,9 +78,10 @@ func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[
 		SCs  []*Segment
 		date = jps.List[0].Date
 
-		panelID    string
-		cellName   string
-		panelIndex = 0
+		panelID      string
+		cellName     string
+		panelSCIndex = -1
+		panelTYIndex = -1
 	)
 	for _, jpPanel := range jps.List {
 		if jpPanel.TY {
@@ -92,23 +93,24 @@ func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[
 
 	for i, segment := range SCs {
 		var (
-			rowOffset = panelIndex * TabelRow
+			// 板内片段序号, 也是克隆列号
+			segmentIndex = i % MaxSegmentSelectSC
+
+			rowOffset = panelSCIndex * TabelRow
 		)
 
-		// 板内片段序号, 也是克隆列号
-		segmentIndex := i % MaxSegmentSelectSC
 		// 初始化输出板
 		if segmentIndex == 0 {
-			panelID = fmt.Sprintf("%s-SC%d", date, panelIndex+1)
-			InitToPanel(xlsx, sheet, panelID, rowOffset, bgStyleMap)
+			panelSCIndex++
+			panelID = fmt.Sprintf("%s-SC%d", date, panelSCIndex+1)
 
-			// 更新为下一板的index
-			panelIndex++
+			rowOffset = panelSCIndex * TabelRow
+			InitToPanel(xlsx, sheet, panelID, rowOffset, bgStyleMap)
 		}
 
 		cellName = CoordinatesToCellName(
-			segmentIndex/PanelRow+2,
-			rowOffset+segmentIndex%PanelRow+2,
+			2+segmentIndex/PanelRow,
+			2+rowOffset+segmentIndex%PanelRow,
 		)
 		simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, segment.ID))
 		for j, cloneID := range segment.SequenceCloneIDs {
@@ -121,7 +123,41 @@ func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[
 			clone.ToCell = toCell
 			simpleUtil.CheckErr(xlsx.SetCellStr(sheet, toCell, clone.Name))
 		}
+	}
 
+	panelSCIndex++
+
+	for i, segment := range TYs {
+		var (
+			rowOffset = (panelTYIndex + panelSCIndex) * TabelRow
+			// 板内片段序号, %PanelRow 也是克隆行号
+			segmentIndex = i % MaxSegmentSeclectTY
+		)
+
+		// 初始化输出板
+		if segmentIndex == 0 {
+			panelTYIndex++
+			panelID = fmt.Sprintf("%s-TY%d", date, panelTYIndex+1)
+			rowOffset = (panelTYIndex + panelSCIndex) * TabelRow
+			InitToPanel(xlsx, sheet, panelID, rowOffset, bgStyleMap)
+		}
+
+		var segmentRow = 2 + rowOffset + segmentIndex%PanelRow
+		cellName = CoordinatesToCellName(
+			2+segmentIndex/PanelRow,
+			segmentRow,
+		)
+		simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, segment.ID))
+		for j, cloneID := range segment.SequenceCloneIDs {
+			clone := segment.CloneMap[cloneID]
+			toCell := CoordinatesToCellName(
+				5+j+segmentIndex/PanelRow*PanelRow/2,
+				segmentRow,
+			)
+			clone.ToPanel = panelID
+			clone.ToCell = toCell
+			simpleUtil.CheckErr(xlsx.SetCellStr(sheet, toCell, clone.Name))
+		}
 	}
 }
 
