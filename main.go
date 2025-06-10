@@ -55,6 +55,25 @@ var (
 		"条带正确克隆",
 		"送测克隆",
 	}
+
+	// 测序YK
+	YKTitle = []string{
+		"*样品名称",
+		"*样品类型",
+		"*载体名称",
+		"*片段大小",
+		"*抗生素类型",
+		"引物信息",
+		"",
+		"",
+		"*测序要求",
+		"备注",
+	}
+	YKPrimerInfoTitle = []string{
+		"*引物类别",
+		"*引物名称",
+		"*自备引物",
+	}
 )
 
 // flag
@@ -88,6 +107,7 @@ func init() {
 
 func main() {
 	var jps = LoadInput(*input, InputSheet)
+	jps.SplitList()
 	// 由Gels更新Segment
 	for _, jpPanel := range jps.List {
 		jpPanel.Gels2Segments()
@@ -108,7 +128,6 @@ func main() {
 	jps.CreateFromPanel(xlsx, sheet, bgStyleMap)
 
 	// 输出2-输出孔图
-	fmt.Println("==输出2-输出孔图==")
 	sheet = "输出孔图"
 	jps.CreateToPanel(xlsx, sheet, bgStyleMap)
 	simpleUtil.CheckErr(xlsx.DeleteSheet("Sheet1"))
@@ -119,6 +138,7 @@ func main() {
 	// 测序YK
 	index := 0
 	fmt.Println("==测序YK==")
+	sheet = "测序YK"
 	for _, jpPanel := range jps.List {
 		segmentIDs := jpPanel.Segments
 		for j := range segmentIDs {
