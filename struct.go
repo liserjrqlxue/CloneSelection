@@ -13,6 +13,28 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+type BioHandler struct {
+	PlateLabel  map[string]int
+	SourcePlate []string
+	DesPlate    []string
+}
+
+type Transfer struct {
+	SourcePlateLable      int
+	SourceWellPosition    string
+	DesPlateLable         int
+	DesWellPosition       string
+	Volume                int
+	BarCode               string
+	ChangeTip             int
+	PreAspirateMixNumber  int
+	PreAspirateMixVolume  int
+	PostDispenseMixNumber int
+	PostDispenseMixVolume int
+	LiquidClass           string
+	Pause                 int
+}
+
 type JPs struct {
 	List []*JPPanel
 	Map  map[string]*JPPanel
@@ -380,6 +402,7 @@ func (jpPanel *JPPanel) Gels2Segments() {
 						Name:  fmt.Sprintf("%s-%s", segment.ID, cloneID),
 						Index: index%jpCloneMax + 1,
 					}
+					clone.InitTransfer()
 					segment.CloneMap[cloneID] = clone
 				}
 				index++
@@ -548,4 +571,25 @@ type Clone struct {
 
 	ToPanel string
 	ToCell  string
+
+	Transfer *Transfer
+}
+
+func (clone *Clone) InitTransfer() {
+	clone.Transfer = &Transfer{
+		Volume:                10,
+		ChangeTip:             1,
+		PreAspirateMixNumber:  0,
+		PreAspirateMixVolume:  0,
+		PostDispenseMixNumber: 0,
+		PostDispenseMixVolume: 0,
+		Pause:                 0,
+	}
+}
+
+func (clone *Clone) UpdateTransfer(source, des int) {
+	clone.Transfer.SourcePlateLable = source
+	clone.Transfer.DesPlateLable = des
+	clone.Transfer.SourceWellPosition = clone.FromCell
+	clone.Transfer.DesWellPosition = clone.ToCell
 }
