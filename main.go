@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"regexp"
 	"strconv"
@@ -130,65 +129,11 @@ func main() {
 	// 输出2-输出孔图
 	sheet = "输出孔图"
 	jps.CreateToPanel(xlsx, sheet, bgStyleMap)
-	simpleUtil.CheckErr(xlsx.DeleteSheet("Sheet1"))
-	simpleUtil.CheckErr(xlsx.SaveAs(*prefix + ".result.xlsx"))
-
-	fmt.Println("==END==")
 
 	// 测序YK
-	index := 0
-	fmt.Println("==测序YK==")
 	sheet = "测序YK"
-	for _, jpPanel := range jps.List {
-		segmentIDs := jpPanel.Segments
-		for j := range segmentIDs {
-			segmentInfo := segmentIDs[j]
-			for k := range segmentInfo.CloneIDs {
-				cloneID := segmentInfo.CloneIDs[k]
-				ID := fmt.Sprintf("%s-%s", segmentInfo.ID, cloneID)
-				segmentLength := "1-1000"
-				if segmentInfo.Length > 1000 {
-					segmentLength = "1001-2000"
-					if segmentInfo.Length > 2000 {
-						log.Fatalf("ID[%s]长度[%d]超标", ID, segmentInfo.Length)
-					}
-				}
-				var primers []string
-				if segmentInfo.T7Primer {
-					primers = append(primers, "T7")
-				}
-				if segmentInfo.T7TermPrimer {
-					primers = append(primers, "T7-Term")
-				}
-				var orientation = ""
-				if segmentInfo.T7Primer && segmentInfo.T7TermPrimer {
-					orientation = "C"
-				} else if segmentInfo.T7Primer {
-					orientation = "A"
-				} else if segmentInfo.T7TermPrimer {
-					orientation = "B"
-				}
+	jps.CreateYK(xlsx, sheet, bgStyleMap)
 
-				fmt.Printf(
-					"%s\n",
-					strings.Join(
-						[]string{
-							ID,
-							"A",
-							"U1AT",
-							segmentLength,
-							"A",
-							"A",
-							strings.Join(primers, "、"),
-							"",
-							orientation,
-							"样本与表格一一对应",
-						},
-						"\t",
-					))
-			}
-			index++
-		}
-	}
-
+	simpleUtil.CheckErr(xlsx.DeleteSheet("Sheet1"))
+	simpleUtil.CheckErr(xlsx.SaveAs(*prefix + ".result.xlsx"))
 }

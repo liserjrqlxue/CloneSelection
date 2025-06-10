@@ -157,21 +157,26 @@ func InitToPanel(xlsx *excelize.File, sheet, panelID string, rowOffset int, bgSt
 
 }
 
-func InitYK(xlsx *excelize.File, sheet string) {
+func InitYK(xlsx *excelize.File, sheet string, endRow int, bgStyleMap map[int]int) {
 	simpleUtil.HandleError(xlsx.NewSheet(sheet))
 
 	var (
 		cellName string
 	)
-	// xlsx.SetColWidth(sheet, "A", "A", 15)
-	// xlsx.SetColWidth(sheet, "B", "B", 20)
-	// xlsx.SetColWidth(sheet, "C", "D", 9)
-	// xlsx.SetColWidth(sheet, "E", "E", 19)
-	// xlsx.SetColWidth(sheet, "F", "F", 17)
-	// xlsx.SetColWidth(sheet, "G", "G", 13)
-	// xlsx.SetColWidth(sheet, "H", "H", 19)
-	// xlsx.SetColWidth(sheet, "I", "I", 16)
-	// xlsx.SetColWidth(sheet, "J", "J", 19)
+	xlsx.SetColWidth(sheet, "A", "A", 18)
+	xlsx.SetColWidth(sheet, "B", "D", 10)
+	xlsx.SetColWidth(sheet, "E", "E", 12)
+	xlsx.SetColWidth(sheet, "F", "I", 10)
+	xlsx.SetColWidth(sheet, "J", "J", 19)
+
+	simpleUtil.CheckErr(
+		xlsx.SetCellStyle(
+			sheet,
+			CoordinatesToCellName(1, 1),
+			CoordinatesToCellName(10, endRow),
+			bgStyleMap[-1],
+		),
+	)
 
 	// 设置表头
 	cellName = CoordinatesToCellName(1, 1)
@@ -189,7 +194,7 @@ func InitYK(xlsx *excelize.File, sheet string) {
 	MergeCell(xlsx, sheet, 3, 1, 3, 2)
 	MergeCell(xlsx, sheet, 4, 1, 4, 2)
 	MergeCell(xlsx, sheet, 5, 1, 5, 2)
-	MergeCell(xlsx, sheet, 6, 2, 8, 2)
+	MergeCell(xlsx, sheet, 6, 1, 8, 1)
 	MergeCell(xlsx, sheet, 9, 1, 9, 2)
 	MergeCell(xlsx, sheet, 10, 1, 10, 2)
 

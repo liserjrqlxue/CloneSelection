@@ -182,9 +182,64 @@ func (jps *JPs) AddTYPanel(xlsx *excelize.File, sheet string, offset int, bgStyl
 	return
 }
 
-func (jps *JPs) CreateYK(xlsx *excelize.File, sheet string) {
-	InitYK(xlsx, sheet)
+func (jps *JPs) CreateYK(xlsx *excelize.File, sheet string, bgStyleMap map[int]int) {
+	simpleUtil.HandleError(xlsx.NewSheet(sheet))
 
+	var rIdx = 2
+	for _, segment := range jps.SCs {
+		var (
+			segmentLength = "1-1000"
+			primers       []string
+			primersName   string
+			orientation   = ""
+		)
+
+		if segment.Length > 1000 {
+			segmentLength = "1001-2000"
+			if segment.Length > 2000 {
+				log.Fatalf("ID[%s]长度[%d]超标", segment.ID, segment.Length)
+			}
+		}
+
+		if segment.T7Primer {
+			primers = append(primers, "T7")
+		}
+		if segment.T7TermPrimer {
+			primers = append(primers, "T7-Term")
+		}
+		primersName = strings.Join(primers, "、")
+
+		if segment.T7Primer && segment.T7TermPrimer {
+			orientation = "C"
+		} else if segment.T7Primer {
+			orientation = "A"
+		} else if segment.T7TermPrimer {
+			orientation = "B"
+		}
+
+		for _, cloneID := range segment.SequenceCloneIDs {
+			rIdx++
+			cellName := CoordinatesToCellName(1, rIdx)
+
+			clone := segment.CloneMap[cloneID]
+			simpleUtil.CheckErr(
+				xlsx.SetSheetRow(
+					sheet, cellName,
+					&[]any{
+						clone.Name,
+						"A", "U1AT",
+						segmentLength,
+						"A", "A",
+						primersName,
+						"",
+						orientation,
+						"样本与表格一一对应",
+					},
+				),
+			)
+		}
+	}
+	InitYK(xlsx, sheet, rIdx, bgStyleMap)
 }
 
 type JPPanel struct {
@@ -289,7 +344,7 @@ func (jpPanel *JPPanel) AddSegment(item map[string]string) *Segment {
 		FromPanel:      make(map[string]string),
 	}
 
-	for primer := range strings.SplitSeq(segment.SequencePrimer, "、") {
+	for primer := range strings.SplitSeq(segment.SequencePrimer, "；") {
 		switch primer {
 		case "T7":
 			segment.T7Primer = true
