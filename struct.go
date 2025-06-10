@@ -87,29 +87,36 @@ func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[
 	xlsx.SetColWidth(sheet, "E", "P", 18)
 
 	var (
-		date = jps.List[0].Date
-
-		panelID      string
-		cellName     string
-		panelSCIndex = -1
-		panelTYIndex = -1
+		panelSCIndex = 0
+		panelTYIndex = 0
 	)
 
-	for i, segment := range jps.SCs {
-		var (
-			// 板内片段序号, 也是克隆列号
-			segmentIndex = i % MaxSegmentSelectSC
+	panelSCIndex = jps.AddSCPanel(xlsx, sheet, panelTYIndex, bgStyleMap)
+	panelTYIndex = jps.AddTYPanel(xlsx, sheet, panelSCIndex, bgStyleMap)
+}
 
-			rowOffset = panelSCIndex * TabelRow
-		)
+func (jps *JPs) AddSCPanel(xlsx *excelize.File, sheet string, offset int, bgStyleMap map[int]int) (panelSCIndex int) {
+	var (
+		date = jps.List[0].Date
+
+		panelID   string
+		rowOffset int
+
+		cellName string
+	)
+	panelSCIndex = 0
+	for i, segment := range jps.SCs {
+		// 板内片段序号, 也是克隆列号
+		var segmentIndex = i % MaxSegmentSelectSC
 
 		// 初始化输出板
 		if segmentIndex == 0 {
-			panelSCIndex++
 			panelID = fmt.Sprintf("%s-SC%d", date, panelSCIndex+1)
 
-			rowOffset = panelSCIndex * TabelRow
+			rowOffset = (panelSCIndex + offset) * TabelRow
 			InitToPanel(xlsx, sheet, panelID, rowOffset, bgStyleMap)
+
+			panelSCIndex++
 		}
 
 		cellName = CoordinatesToCellName(
@@ -129,21 +136,30 @@ func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[
 		}
 	}
 
-	panelSCIndex++
+	return
+}
 
+func (jps *JPs) AddTYPanel(xlsx *excelize.File, sheet string, offset int, bgStyleMap map[int]int) (panelTYIndex int) {
+	var (
+		date = jps.List[0].Date
+
+		panelID   string
+		rowOffset int
+
+		cellName string
+	)
+	panelTYIndex = 0
 	for i, segment := range jps.TYs {
-		var (
-			rowOffset = (panelTYIndex + panelSCIndex) * TabelRow
-			// 板内片段序号, %PanelRow 也是克隆行号
-			segmentIndex = i % MaxSegmentSeclectTY
-		)
+		// 板内片段序号, %PanelRow 也是克隆行号
+		var segmentIndex = i % MaxSegmentSeclectTY
 
 		// 初始化输出板
 		if segmentIndex == 0 {
-			panelTYIndex++
 			panelID = fmt.Sprintf("%s-TY%d", date, panelTYIndex+1)
-			rowOffset = (panelTYIndex + panelSCIndex) * TabelRow
+			rowOffset = (panelTYIndex + offset) * TabelRow
 			InitToPanel(xlsx, sheet, panelID, rowOffset, bgStyleMap)
+
+			panelTYIndex++
 		}
 
 		var segmentRow = 2 + rowOffset + segmentIndex%PanelRow
@@ -163,6 +179,7 @@ func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[
 			simpleUtil.CheckErr(xlsx.SetCellStr(sheet, toCell, clone.Name))
 		}
 	}
+	return
 }
 
 func (jps *JPs) CreateYK(xlsx *excelize.File, sheet string) {
