@@ -45,6 +45,7 @@ func LoadInput(excel, sheet string) (jps *JPs) {
 					ID: jpID,
 					TY: isTY.MatchString(item["片段名称"]),
 				}
+				simpleUtil.CheckErr(current.ParseID())
 				jps.Map[current.ID] = current
 				jps.List = append(jps.List, current)
 			}
@@ -78,6 +79,14 @@ func LoadInput(excel, sheet string) (jps *JPs) {
 			log.Fatalf("片段重复:[%d:%s]", i+1, segmentInfo.ID)
 		}
 		segmentInfoMap[segmentInfo.ID] = true
+
+		// date 相同
+		date := jps.List[0].Date
+		for _, jpPanel := range jps.List {
+			if jpPanel.Date != date {
+				log.Fatalf("Date不一致:[%s]vs[%s]", jps.List[0].ID, jpPanel.ID)
+			}
+		}
 
 	}
 	return

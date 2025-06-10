@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/liserjrqlxue/goUtil/simpleUtil"
 	"github.com/liserjrqlxue/goUtil/stringsUtil"
@@ -65,6 +67,111 @@ func (jps *JPs) CreateFromPanel(xlsx *excelize.File, sheet string, bgStyleMap ma
 		jpPanel.AddFromPanel(xlsx, sheet, i, bgStyleMap)
 	}
 }
+func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[int]int) {
+	simpleUtil.HandleError(xlsx.NewSheet(sheet))
+
+	xlsx.SetColWidth(sheet, "A", "D", 16)
+	xlsx.SetColWidth(sheet, "E", "P", 18)
+
+	var (
+		TYs  []*Segment
+		SCs  []*Segment
+		date = jps.List[0].Date
+
+		panelID    string
+		cellName   string
+		tableIndex = -1
+	)
+	for _, jpPanel := range jps.List {
+		if jpPanel.TY {
+			TYs = append(TYs, jpPanel.Segments...)
+		} else {
+			SCs = append(SCs, jpPanel.Segments...)
+		}
+	}
+
+	for i, segment := range SCs {
+
+		// 板内片段序号, 也是克隆列号
+		segmentIndex := i % MaxSegmentSelectSC
+		// 初始化输出板
+		if segmentIndex == 0 {
+			tableIndex++
+			panelID = fmt.Sprintf("%s-SC%d", date, tableIndex+1)
+
+			// 行标题
+			cellName = CoordinatesToCellName(1, tableIndex*TabelRow+1)
+			simpleUtil.CheckErr(
+				xlsx.SetSheetRow(
+					sheet, cellName,
+					&[]any{panelID, "片段名称1", "片段名称2", panelID},
+				),
+			)
+			cellName = CoordinatesToCellName(5, tableIndex*TabelRow+1)
+			simpleUtil.CheckErr(
+				xlsx.SetSheetRow(sheet, cellName, &PanelColTitle),
+			)
+
+			// 列标题
+			cellName = CoordinatesToCellName(4, tableIndex*TabelRow+2)
+			simpleUtil.CheckErr(
+				xlsx.SetSheetCol(sheet, cellName, &PanelRowTitle),
+			)
+
+			// 合并单元格
+			simpleUtil.CheckErr(
+				xlsx.MergeCell(
+					sheet,
+					CoordinatesToCellName(1, tableIndex*TabelRow+1),
+					CoordinatesToCellName(1, tableIndex*TabelRow+PanelRow+1),
+				),
+			)
+
+			// 格式
+			simpleUtil.CheckErr(
+				xlsx.SetCellStyle(
+					sheet,
+					CoordinatesToCellName(1, tableIndex*TabelRow+1),
+					CoordinatesToCellName(16, tableIndex*TabelRow+9),
+					bgStyleMap[-1],
+				),
+			)
+			simpleUtil.CheckErr(
+				xlsx.SetCellStyle(
+					sheet,
+					CoordinatesToCellName(4, tableIndex*TabelRow+1),
+					CoordinatesToCellName(4, tableIndex*TabelRow+9),
+					bgStyleMap[3],
+				),
+			)
+			simpleUtil.CheckErr(
+				xlsx.SetCellStyle(
+					sheet,
+					CoordinatesToCellName(4, tableIndex*TabelRow+1),
+					CoordinatesToCellName(16, tableIndex*TabelRow+1),
+					bgStyleMap[3],
+				),
+			)
+		}
+
+		cellName = CoordinatesToCellName(
+			segmentIndex/PanelRow+2,
+			tableIndex*TabelRow+segmentIndex%PanelRow+2,
+		)
+		simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, segment.ID))
+		for j, cloneID := range segment.SequenceCloneIDs {
+			clone := segment.CloneMap[cloneID]
+			toCell := CoordinatesToCellName(
+				segmentIndex+5,
+				tableIndex*TabelRow+j+2,
+			)
+			clone.ToPanel = panelID
+			clone.ToCell = toCell
+			simpleUtil.CheckErr(xlsx.SetCellStr(sheet, toCell, clone.Name))
+		}
+
+	}
+}
 
 type JPPanel struct {
 	ID        string
@@ -76,10 +183,32 @@ type JPPanel struct {
 	GelLayout string
 }
 
+var (
+	regPanelID = regexp.MustCompile(`(\d+)JP-(\d+)`)
+)
+
+func (jpPanel *JPPanel) ParseID() error {
+	match := regPanelID.FindStringSubmatch(jpPanel.ID)
+	if match == nil {
+		return fmt.Errorf("panelID format error![%s]", jpPanel.ID)
+	}
+	index, err := strconv.Atoi(match[2])
+	if err != nil {
+		return fmt.Errorf("panelID format error![%s][%w]", jpPanel.ID, err)
+	}
+	jpPanel.Index = index
+	_, err = time.Parse("20060102", match[1])
+	jpPanel.Date = match[1]
+	if err != nil {
+		return fmt.Errorf("panelID format error![%s][%w]", jpPanel.ID, err)
+	}
+	return nil
+}
+
 func (jpPanel *JPPanel) Gels2Segments() {
 	var (
 		gels       = jpPanel.Gels
-		jpCloneMax = MaxJPClone
+		jpCloneMax = MaxJPCloneSC
 		// 非ladder克隆序号
 		index = 0
 	)
@@ -113,6 +242,7 @@ func (jpPanel *JPPanel) Gels2Segments() {
 					segment.CloneIDs = append(segment.CloneIDs, cloneID)
 					clone := &Clone{
 						ID:    cloneID,
+						Name:  fmt.Sprintf("%s-%s", segment.ID, cloneID),
 						Index: index%jpCloneMax + 1,
 					}
 					segment.CloneMap[cloneID] = clone
@@ -123,7 +253,7 @@ func (jpPanel *JPPanel) Gels2Segments() {
 	}
 
 	// 更新 segment.SequenceCount
-	maxCloneSelect := MaxCloneSelect
+	maxCloneSelect := MaxCloneSelectSC
 	if jpPanel.TY {
 		maxCloneSelect = MaxCloneSelectTY
 	}
@@ -165,8 +295,8 @@ func (jpPanel *JPPanel) AddFromPanel(xlsx *excelize.File, sheet string, i int, b
 	jpID := jpPanel.ID
 	segmentIDs := jpPanel.Segments
 
-	maxSegment := MaxSegment
-	maxJPClone := MaxJPClone
+	maxSegment := MaxSegmentSC
+	maxJPClone := MaxJPCloneSC
 	if jpPanel.TY {
 		maxSegment = MaxSegmentTY
 		maxJPClone = MaxJPCloneTY
@@ -188,6 +318,15 @@ func (jpPanel *JPPanel) AddFromPanel(xlsx *excelize.File, sheet string, i int, b
 	simpleUtil.CheckErr(
 		xlsx.SetSheetCol(sheet, cellName, &PanelRowTitle),
 	)
+	// 合并单元格
+	simpleUtil.CheckErr(
+		xlsx.MergeCell(
+			sheet,
+			CoordinatesToCellName(1, i*TabelRow+1),
+			CoordinatesToCellName(1, i*TabelRow+1+PanelRow),
+		),
+	)
+
 	simpleUtil.CheckErr(
 		xlsx.SetCellStyle(
 			sheet,
@@ -234,14 +373,14 @@ func (jpPanel *JPPanel) AddFromPanel(xlsx *excelize.File, sheet string, i int, b
 			cloneIndex++
 		}
 	}
-	// 合并单元格
-	simpleUtil.CheckErr(
-		xlsx.MergeCell(
-			sheet,
-			CoordinatesToCellName(1, i*TabelRow+1),
-			CoordinatesToCellName(1, i*TabelRow+9),
-		),
-	)
+	// // 合并单元格
+	// simpleUtil.CheckErr(
+	// 	xlsx.MergeCell(
+	// 		sheet,
+	// 		CoordinatesToCellName(1, i*TabelRow+1),
+	// 		CoordinatesToCellName(1, i*TabelRow+9),
+	// 	),
+	// )
 
 }
 
@@ -267,6 +406,7 @@ type Segment struct {
 type Clone struct {
 	Index int
 	ID    string
+	Name  string
 
 	FromPanel string
 	FromCell  string

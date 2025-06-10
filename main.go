@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/liserjrqlxue/goUtil/simpleUtil"
 	"github.com/xuri/excelize/v2"
@@ -18,12 +17,16 @@ var (
 	InputSheet = "胶图判定"
 	// 每个JP板的片段个数
 	MaxSegmentRow = 8
-	MaxSegment    = 6
+	MaxSegmentSC  = 6
 	MaxSegmentTY  = 8
 	// 每个片段的克隆个数
-	MaxJPClone       = 16
-	MaxJPCloneTY     = 12
-	MaxCloneSelect   = 8
+	MaxJPCloneSC = 16
+	MaxJPCloneTY = 12
+	// 每个输出板上的片段个数 Clone*Segment=96
+	MaxSegmentSelectSC  = 12
+	MaxSegmentSeclectTY = 16
+	// 每个输出板上的片段的克隆个数
+	MaxCloneSelectSC = 8
 	MaxCloneSelectTY = 6
 
 	// 胶图 25x4
@@ -104,35 +107,17 @@ func main() {
 	sheet = "选择孔图"
 	jps.CreateFromPanel(xlsx, sheet, bgStyleMap)
 
+	// 输出2-输出孔图
+	fmt.Println("==输出2-输出孔图==")
+	sheet = "输出孔图"
+	jps.CreateToPanel(xlsx, sheet, bgStyleMap)
 	simpleUtil.CheckErr(xlsx.DeleteSheet("Sheet1"))
 	simpleUtil.CheckErr(xlsx.SaveAs(*prefix + ".result.xlsx"))
 
-	// 输出2-输出孔图
-	fmt.Println("==输出2-输出孔图==")
-	index := 0
-	panelID := ""
-	for i, jpPanel := range jps.List {
-		if i%2 == 0 {
-			// new panel
-			date := time.Now().Format("20050102")
-			panelID = fmt.Sprintf("[%s]-SC%d", date, (i+1)/2)
-			fmt.Printf("%s\t片段名称1\t片段名称2\t%s\t%s", panelID, panelID, strings.Join(ColName12, "\t"))
-			index = 0
-		}
-		segmentIDs := jpPanel.Segments
-		for j := range segmentIDs {
-			segmentInfo := segmentIDs[j]
-			fmt.Printf("%s\t%s\t/\t%c", panelID, segmentInfo.ID, 'A'+index)
-			for k := range segmentInfo.CloneIDs {
-				cloneID := segmentInfo.CloneIDs[k]
-				fmt.Printf("\t%s-%s", segmentInfo.ID, cloneID)
-			}
-			index++
-		}
-	}
 	fmt.Println("==END==")
 
 	// 测序YK
+	index := 0
 	fmt.Println("==测序YK==")
 	for _, jpPanel := range jps.List {
 		segmentIDs := jpPanel.Segments
