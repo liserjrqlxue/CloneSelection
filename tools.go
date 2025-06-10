@@ -156,3 +156,41 @@ func InitToPanel(xlsx *excelize.File, sheet, panelID string, rowOffset int, bgSt
 	)
 
 }
+
+func InitYK(xlsx *excelize.File, sheet string) {
+	simpleUtil.HandleError(xlsx.NewSheet(sheet))
+
+	var (
+		cellName string
+	)
+	// xlsx.SetColWidth(sheet, "A", "A", 15)
+	// xlsx.SetColWidth(sheet, "B", "B", 20)
+	// xlsx.SetColWidth(sheet, "C", "D", 9)
+	// xlsx.SetColWidth(sheet, "E", "E", 19)
+	// xlsx.SetColWidth(sheet, "F", "F", 17)
+	// xlsx.SetColWidth(sheet, "G", "G", 13)
+	// xlsx.SetColWidth(sheet, "H", "H", 19)
+	// xlsx.SetColWidth(sheet, "I", "I", 16)
+	// xlsx.SetColWidth(sheet, "J", "J", 19)
+
+	// 设置表头
+	cellName = CoordinatesToCellName(1, 1)
+	simpleUtil.CheckErr(
+		xlsx.SetSheetRow(sheet, cellName, &YKTitle),
+	)
+	cellName = CoordinatesToCellName(6, 2)
+	simpleUtil.CheckErr(
+		xlsx.SetSheetRow(sheet, cellName, &YKPrimerInfoTitle),
+	)
+
+	// 合并单元格
+	MergeCell(xlsx, sheet, 1, 1, 1, 2)
+	MergeCell(xlsx, sheet, 2, 1, 2, 2)
+	MergeCell(xlsx, sheet, 3, 1, 3, 2)
+	MergeCell(xlsx, sheet, 4, 1, 4, 2)
+	MergeCell(xlsx, sheet, 5, 1, 5, 2)
+	MergeCell(xlsx, sheet, 6, 2, 8, 2)
+	MergeCell(xlsx, sheet, 9, 1, 9, 2)
+	MergeCell(xlsx, sheet, 10, 1, 10, 2)
+
+}
