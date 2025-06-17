@@ -53,10 +53,22 @@ func (t *Transfer) String() string {
 
 type JPs struct {
 	List []*JPPanel
-	Map  map[string]*JPPanel
 
 	SCs []*Segment
 	TYs []*Segment
+}
+
+func (jps *JPs) SplitJPs(n int) (JPsList []*JPs) {
+	var currentJPs *JPs
+	for i, jpPanel := range jps.List {
+		log.Printf("loop %d %s", i, jpPanel.ID)
+		if i%n == 0 {
+			currentJPs = &JPs{}
+			JPsList = append(JPsList, currentJPs)
+		}
+		currentJPs.List = append(currentJPs.List, jpPanel)
+	}
+	return
 }
 
 func (jps *JPs) SplitList() {
@@ -164,13 +176,17 @@ func (jps *JPs) AddSCPanel(xlsx *excelize.File, sheet string, offset int, bgStyl
 		simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, segment.ID))
 		for j, cloneID := range segment.SequenceCloneIDs {
 			clone := segment.CloneMap[cloneID]
-			toCell := CoordinatesToCellName(
+			cellName := CoordinatesToCellName(
 				segmentIndex+5,
 				rowOffset+j+2,
 			)
+			toCcell := CoordinatesToCellName(
+				j+1,
+				segmentIndex+1,
+			)
 			clone.ToPanel = panelID
-			clone.ToCell = toCell
-			simpleUtil.CheckErr(xlsx.SetCellStr(sheet, toCell, clone.Name))
+			clone.ToCell = toCcell
+			simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, clone.Name))
 		}
 	}
 
@@ -208,13 +224,17 @@ func (jps *JPs) AddTYPanel(xlsx *excelize.File, sheet string, offset int, bgStyl
 		simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, segment.ID))
 		for j, cloneID := range segment.SequenceCloneIDs {
 			clone := segment.CloneMap[cloneID]
-			toCell := CoordinatesToCellName(
+			cellName := CoordinatesToCellName(
 				5+j+segmentIndex/PanelRow*PanelRow/2,
 				segmentRow,
 			)
+			toCell := CoordinatesToCellName(
+				1+segmentIndex%PanelRow,
+				1+j+segmentIndex/PanelRow*PanelRow/2,
+			)
 			clone.ToPanel = panelID
 			clone.ToCell = toCell
-			simpleUtil.CheckErr(xlsx.SetCellStr(sheet, toCell, clone.Name))
+			simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, clone.Name))
 		}
 	}
 	return
@@ -584,10 +604,10 @@ func (jpPanel *JPPanel) AddFromPanel(xlsx *excelize.File, sheet string, i int, b
 		for k := range maxJPClone {
 			row := cloneIndex / PanelCol
 			col := 1 + cloneIndex%PanelCol
-			fromCel := fmt.Sprintf("%c%d", row+'A', col)
+			fromCel := CoordinatesToCellName(row+1, col)
 			cloneID := strconv.Itoa(k + 1)
 			segment.FromPanel[cloneID] = fromCel
-			cellName = simpleUtil.HandleError(excelize.CoordinatesToCellName(2+col, row+2+i*TabelRow))
+			cellName = CoordinatesToCellName(2+col, row+2+i*TabelRow)
 			ID := fmt.Sprintf("%s-%s", segment.ID, cloneID)
 			simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, ID))
 			if clone, ok := segment.CloneMap[cloneID]; ok {
