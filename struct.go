@@ -150,8 +150,8 @@ func (jps *JPs) CreateDetailedList(xlsx *excelize.File, sheet string) {
 func (jps *JPs) CreateFromPanel(xlsx *excelize.File, sheet string, bgStyleMap map[int]int) {
 	simpleUtil.HandleError(xlsx.NewSheet(sheet))
 
-	xlsx.SetColWidth(sheet, "A", "B", 12)
-	xlsx.SetColWidth(sheet, "C", "N", 18)
+	xlsx.SetColWidth(sheet, "A", "B", 14)
+	xlsx.SetColWidth(sheet, "C", "N", 20)
 
 	for i, jpPanel := range jps.List {
 		jpPanel.AddFromPanel(xlsx, sheet, i, bgStyleMap)
@@ -161,7 +161,7 @@ func (jps *JPs) CreateToPanel(xlsx *excelize.File, sheet string, bgStyleMap map[
 	simpleUtil.HandleError(xlsx.NewSheet(sheet))
 
 	xlsx.SetColWidth(sheet, "A", "D", 16)
-	xlsx.SetColWidth(sheet, "E", "P", 18)
+	xlsx.SetColWidth(sheet, "E", "P", 20)
 
 	var (
 		panelSCIndex = 0
@@ -637,7 +637,7 @@ func (jpPanel *JPPanel) AddFromPanel(xlsx *excelize.File, sheet string, i int, b
 			cellName = CoordinatesToCellName(3+col, 2+row+i*TabelRow)
 			ID := fmt.Sprintf("%s-%s", segment.ID, cloneID)
 			simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, ID))
-			log.Printf("SetCellStr(%s,%s,%s),i:%d,k:%d,cloneIndex:%d,%s", sheet, cellName, ID, i, k, cloneIndex, fromCel)
+			// log.Printf("SetCellStr(%s,%s,%s),i:%d,k:%d,cloneIndex:%d,%s", sheet, cellName, ID, i, k, cloneIndex, fromCel)
 			if clone, ok := segment.CloneMap[cloneID]; ok {
 				clone.FromCell = fromCel
 				clone.FromPanel = jpPanel.ID

@@ -161,7 +161,7 @@ func InitYK(xlsx *excelize.File, sheet string, endRow int, bgStyleMap map[int]in
 		cellName string
 	)
 
-	xlsx.SetColWidth(sheet, "A", "A", 18)
+	xlsx.SetColWidth(sheet, "A", "A", 20)
 	xlsx.SetColWidth(sheet, "B", "D", 10)
 	xlsx.SetColWidth(sheet, "E", "E", 12)
 	xlsx.SetColWidth(sheet, "F", "I", 10)
@@ -214,7 +214,7 @@ func InitGWZ(xlsx *excelize.File, sheet string, endRow int, bgStyleMap map[int]i
 		cellName string
 	)
 	xlsx.SetColWidth(sheet, "A", "A", 9)
-	xlsx.SetColWidth(sheet, "B", "B", 18)
+	xlsx.SetColWidth(sheet, "B", "B", 20)
 	xlsx.SetColWidth(sheet, "C", "C", 13)
 	xlsx.SetColWidth(sheet, "D", "D", 16)
 	xlsx.SetColWidth(sheet, "E", "F", 10)
