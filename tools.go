@@ -8,9 +8,11 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func LoadInput(excel, sheet string) (jps *JPs) {
+func LoadInput(excel, sheet string) (jps *JPs, xlsx *excelize.File) {
+	jps = &JPs{}
+	xlsx = simpleUtil.HandleError(excelize.OpenFile(excel))
+
 	var (
-		xlsx  = simpleUtil.HandleError(excelize.OpenFile(excel))
 		rows  = simpleUtil.HandleError(xlsx.GetRows(sheet))
 		title []string
 
@@ -19,7 +21,7 @@ func LoadInput(excel, sheet string) (jps *JPs) {
 		// 检查 segmentID 是否重复
 		segmentInfoMap = make(map[string]bool)
 	)
-	jps = &JPs{}
+
 	for i := range rows {
 		// 读取 row[i] -> item
 		if i == 0 {

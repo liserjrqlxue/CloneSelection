@@ -58,6 +58,33 @@ type JPs struct {
 	TYs []*Segment
 }
 
+func (jps *JPs) WriteSheets(xlsx *excelize.File) {
+	var (
+		sheet      = ""
+		bgStyleMap = CreateStyles(xlsx)
+	)
+
+	// 输出1-清单
+	sheet = "清单"
+	jps.CreateDetailedList(xlsx, sheet)
+
+	// 输出2-选择孔图
+	sheet = "选择孔图"
+	jps.CreateFromPanel(xlsx, sheet, bgStyleMap)
+
+	// 输出2-输出孔图
+	sheet = "输出孔图"
+	jps.CreateToPanel(xlsx, sheet, bgStyleMap)
+
+	// 测序YK
+	sheet = "测序YK"
+	jps.CreateYK(xlsx, sheet, bgStyleMap)
+
+	// 测序GWZ
+	sheet = "测序GWZ"
+	jps.CreateGWZ(xlsx, sheet, bgStyleMap)
+}
+
 func (jps *JPs) SplitJPs(n int) (JPsList []*JPs) {
 	var currentJPs *JPs
 	for i, jpPanel := range jps.List {
@@ -602,14 +629,15 @@ func (jpPanel *JPPanel) AddFromPanel(xlsx *excelize.File, sheet string, i int, b
 		segment := segmentIDs[j]
 		// fmt.Printf("%s\t%c\n", jpID, row)
 		for k := range maxJPClone {
-			row := cloneIndex / PanelCol
-			col := 1 + cloneIndex%PanelCol
-			fromCel := CoordinatesToCellName(row+1, col)
+			row := cloneIndex/2/PanelCol*2 + cloneIndex%2
+			col := cloneIndex / 2 % PanelCol
+			fromCel := CoordinatesToCellName(row+1, col+1)
 			cloneID := strconv.Itoa(k + 1)
 			segment.FromPanel[cloneID] = fromCel
-			cellName = CoordinatesToCellName(2+col, row+2+i*TabelRow)
+			cellName = CoordinatesToCellName(3+col, 2+row+i*TabelRow)
 			ID := fmt.Sprintf("%s-%s", segment.ID, cloneID)
 			simpleUtil.CheckErr(xlsx.SetCellStr(sheet, cellName, ID))
+			log.Printf("SetCellStr(%s,%s,%s),i:%d,k:%d,cloneIndex:%d,%s", sheet, cellName, ID, i, k, cloneIndex, fromCel)
 			if clone, ok := segment.CloneMap[cloneID]; ok {
 				clone.FromCell = fromCel
 				clone.FromPanel = jpPanel.ID

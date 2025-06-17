@@ -123,49 +123,29 @@ func init() {
 }
 
 func main() {
-	var jps = LoadInput(*input, InputSheet)
+	var jps, xlsx = LoadInput(*input, InputSheet)
+	// 由Gels更新Segment
+	for _, jpPanel := range jps.List {
+		jpPanel.Gels2Segments()
+	}
+	jps.SplitList()
+	jps.WriteSheets(xlsx)
+	simpleUtil.CheckErr(xlsx.SaveAs(*prefix + ".result.xlsx"))
+
 	var jpsList = jps.SplitJPs(4)
-
 	for i, jps := range jpsList {
-		tagPrefix := *prefix + "-" + string(rune('A'+i))
-
-		jps.SplitList()
-		// 由Gels更新Segment
-		for _, jpPanel := range jps.List {
-			jpPanel.Gels2Segments()
-		}
-
 		var (
-			xlsx       = excelize.NewFile()
-			sheet      = ""
-			bgStyleMap = CreateStyles(xlsx)
+			xlsx      = excelize.NewFile()
+			tagPrefix = *prefix + "-" + string(rune('A'+i))
 		)
+		jps.SplitList()
 
-		// 输出1-清单
-		sheet = "清单"
-		jps.CreateDetailedList(xlsx, sheet)
-
-		// 输出2-选择孔图
-		sheet = "选择孔图"
-		jps.CreateFromPanel(xlsx, sheet, bgStyleMap)
-
-		// 输出2-输出孔图
-		sheet = "输出孔图"
-		jps.CreateToPanel(xlsx, sheet, bgStyleMap)
-
-		// 测序YK
-		sheet = "测序YK"
-		jps.CreateYK(xlsx, sheet, bgStyleMap)
-
-		// 测序GWZ
-		sheet = "测序GWZ"
-		jps.CreateGWZ(xlsx, sheet, bgStyleMap)
+		jps.WriteSheets(xlsx)
 
 		simpleUtil.CheckErr(xlsx.DeleteSheet("Sheet1"))
 		simpleUtil.CheckErr(xlsx.SaveAs(tagPrefix + ".result.xlsx"))
 
-		bh := jps.CreateBioHandler()
+		jps.CreateBioHandler()
 		jps.WriteTransfer(tagPrefix + ".Transfer.csv")
-		log.Printf("%+v\n", bh)
 	}
 }
