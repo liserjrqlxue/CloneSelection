@@ -19,9 +19,7 @@ func LoadInput(excel, sheet string) (jps *JPs) {
 		// 检查 segmentID 是否重复
 		segmentInfoMap = make(map[string]bool)
 	)
-	jps = &JPs{
-		Map: make(map[string]*JPPanel),
-	}
+	jps = &JPs{}
 	for i := range rows {
 		// 读取 row[i] -> item
 		if i == 0 {
@@ -46,7 +44,6 @@ func LoadInput(excel, sheet string) (jps *JPs) {
 					TY: isTY.MatchString(item["片段名称"]),
 				}
 				simpleUtil.CheckErr(current.ParseID())
-				jps.Map[current.ID] = current
 				jps.List = append(jps.List, current)
 			}
 		} else {
