@@ -88,7 +88,7 @@ func (jps *JPs) WriteSheets(xlsx *excelize.File) {
 func (jps *JPs) SplitJPs(n int) (JPsList []*JPs) {
 	var currentJPs *JPs
 	for i, jpPanel := range jps.List {
-		log.Printf("loop %d %s", i, jpPanel.ID)
+		// log.Printf("loop %d %s", i, jpPanel.ID)
 		if i%n == 0 {
 			currentJPs = &JPs{}
 			JPsList = append(JPsList, currentJPs)
