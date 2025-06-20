@@ -75,7 +75,7 @@ func LoadInput(excel, sheet string) (jps *JPs, xlsx *excelize.File) {
 
 		segmentInfo := current.AddSegment(item)
 		if segmentInfoMap[segmentInfo.ID] {
-			log.Fatalf("片段重复:[%d:%s]", i+1, segmentInfo.ID)
+			log.Printf("Error:片段重复:[%d:%s]", i+1, segmentInfo.ID)
 		}
 		segmentInfoMap[segmentInfo.ID] = true
 
