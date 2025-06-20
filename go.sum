@@ -1,5 +1,9 @@
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/liserjrqlxue/DNA v0.1.8 h1:yKdPvud8OGykIftW2DKoT79E7wQNt9vCMfmoJ58f8kA=
+github.com/liserjrqlxue/DNA v0.1.8/go.mod h1:ox5iZlpIpRMbWekhbf65rdoRPnLtt+Kxoag2WUfGq/o=
+github.com/liserjrqlxue/PrimerDesigner/v2 v2.5.1 h1:rsQwaTk/fuus4dVD0vUa4NO9iGSNaChA3etoqLIyfQs=
+github.com/liserjrqlxue/PrimerDesigner/v2 v2.5.1/go.mod h1:czFoY8MCQs77Pq2JxoQ7bzCqM3Kt/s4Vz1Lt6XBdifA=
 github.com/liserjrqlxue/goUtil v0.2.2 h1:mFL3r/GD0s3/x/VDWxDkfmNWtHokqdPdoRG57H62vLw=
 github.com/liserjrqlxue/goUtil v0.2.2/go.mod h1:HpRbioiKXuFLSZLc/FboWjarrUfaQ90AB/zIaDv4p5g=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

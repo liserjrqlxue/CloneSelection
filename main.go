@@ -3,10 +3,13 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/liserjrqlxue/PrimerDesigner/v2/pkg/cy0130"
 	"github.com/liserjrqlxue/goUtil/simpleUtil"
 	"github.com/xuri/excelize/v2"
 )
@@ -105,6 +108,11 @@ var (
 		"",
 		"output prefix",
 	)
+	outDir = flag.String(
+		"o",
+		"",
+		"output dir",
+	)
 )
 
 func init() {
@@ -113,8 +121,11 @@ func init() {
 		flag.Usage()
 		log.Fatal("-i required")
 	}
+	if *outDir == "" {
+		*outDir = strings.TrimSuffix(*input, ".xlsx")
+	}
 	if *prefix == "" {
-		*prefix = strings.TrimSuffix(*input, ".xlsx")
+		*prefix = filepath.Base(*outDir)
 	}
 
 	for i := range PanelCol {
@@ -123,6 +134,10 @@ func init() {
 }
 
 func main() {
+	simpleUtil.CheckErr(os.MkdirAll(*outDir, 0755))
+
+	var patterns []string
+
 	var jps, xlsx = LoadInput(*input, InputSheet)
 	// 由Gels更新Segment
 	for _, jpPanel := range jps.List {
@@ -130,22 +145,45 @@ func main() {
 	}
 	jps.SplitList()
 	jps.WriteSheets(xlsx)
-	simpleUtil.CheckErr(xlsx.SaveAs(*prefix + ".result.xlsx"))
+
+	var result = *prefix + ".result.xlsx"
+	patterns = append(patterns, result)
+	simpleUtil.CheckErr(xlsx.SaveAs(filepath.Join(*outDir, result)))
 
 	var jpsList = jps.SplitJPs(4)
 	for i, jps := range jpsList {
 		var (
-			xlsx      = excelize.NewFile()
-			tagPrefix = *prefix + "-" + string(rune('A'+i))
+			xlsx        = excelize.NewFile()
+			tagPrefix   = *prefix + "-" + string(rune('A'+i))
+			tagResult   = tagPrefix + ".result.xlsx"
+			tagTransfer = tagPrefix + ".Transfer.csv"
 		)
+		patterns = append(patterns, tagResult)
+		patterns = append(patterns, tagTransfer)
+		tagResult = filepath.Join(*outDir, tagResult)
+		tagTransfer = filepath.Join(*outDir, tagTransfer)
+
 		jps.SplitList()
 
 		jps.WriteSheets(xlsx)
 
 		simpleUtil.CheckErr(xlsx.DeleteSheet("Sheet1"))
-		simpleUtil.CheckErr(xlsx.SaveAs(tagPrefix + ".result.xlsx"))
+		simpleUtil.CheckErr(xlsx.SaveAs(tagResult))
 
 		jps.CreateBioHandler()
-		jps.WriteTransfer(tagPrefix + ".Transfer.csv")
+		jps.WriteTransfer(tagTransfer)
 	}
+
+	// Compress-Archive
+	// simpleUtil.CheckErr(
+	// 	sge.Run(
+	// 		"powershell",
+	// 		"Compress-Archive",
+	// 		"-DestinationPath", *outDir+".zip",
+	// 		"-Path", *outDir+"/*",
+	// 		"-Force",
+	// 	),
+	// )
+	absOutDir := simpleUtil.HandleError(filepath.Abs(*outDir))
+	simpleUtil.CheckErr(cy0130.CompressArchive(absOutDir, absOutDir+".zip", patterns))
 }
