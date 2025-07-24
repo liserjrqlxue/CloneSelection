@@ -14,13 +14,21 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+const (
+	// 每个JP板的片段个数, 也即行数
+	MaxSegmentRow = 8
+
+	// 胶图 25x4
+	MaxGelCol = 25
+	MaxGelRow = 4
+)
+
 // global
 var (
 	InputSheet = "胶图判定"
-	// 每个JP板的片段个数
-	MaxSegmentRow = 8
-	MaxSegmentSC  = 6
-	MaxSegmentTY  = 8
+	// 每种JP的片段个数
+	MaxSegmentSC = 6
+	MaxSegmentTY = 8
 	// 每个片段的克隆个数
 	MaxJPCloneSC = 16
 	MaxJPCloneTY = 12
@@ -30,10 +38,6 @@ var (
 	// 每个输出板上的片段的克隆个数
 	MaxCloneSelectSC = 8
 	MaxCloneSelectTY = 6
-
-	// 胶图 25x4
-	MaxGelCol = 25
-	MaxGelRow = 4
 
 	// 96孔板
 	PanelCol      = 12
@@ -143,6 +147,7 @@ func main() {
 	for _, jpPanel := range jps.List {
 		jpPanel.Gels2Segments()
 	}
+	// 拆分SC TY
 	jps.SplitList()
 	jps.WriteSheets(xlsx)
 
