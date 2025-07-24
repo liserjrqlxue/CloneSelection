@@ -21,6 +21,11 @@ const (
 	// 胶图 25x4
 	MaxGelCol = 25
 	MaxGelRow = 4
+
+	// s输出 6孔板
+	PanelCol = 12
+	PanelRow = 8
+	TabelRow = 10
 )
 
 // global
@@ -33,16 +38,12 @@ var (
 	MaxJPCloneSC = 16
 	MaxJPCloneTY = 12
 	// 每个输出板上的片段个数 Clone*Segment=96
-	MaxSegmentSelectSC  = 12
+	MaxSegmentSelectSC  = 8
 	MaxSegmentSeclectTY = 16
 	// 每个输出板上的片段的克隆个数
-	MaxCloneSelectSC = 8
+	MaxCloneSelectSC = 12
 	MaxCloneSelectTY = 6
 
-	// 96孔板
-	PanelCol      = 12
-	PanelRow      = 8
-	TabelRow      = 10
 	PanelColTitle = []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
 	PanelRowTitle = []string{"A", "B", "C", "D", "E", "F", "G", "H"}
 
