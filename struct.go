@@ -331,7 +331,7 @@ func (jps *JPs) CreateGWZ(xlsx *excelize.File, sheet string, bgStyleMap map[int]
 	simpleUtil.HandleError(xlsx.NewSheet(sheet))
 
 	var index = 0
-	for _, segment := range jps.SCs {
+	for _, segment := range jps.TYs {
 		var (
 			segmentLength = ""
 
