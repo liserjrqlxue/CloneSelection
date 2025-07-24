@@ -271,57 +271,59 @@ func (jps *JPs) CreateYK(xlsx *excelize.File, sheet string, bgStyleMap map[int]i
 	simpleUtil.HandleError(xlsx.NewSheet(sheet))
 
 	var rIdx = 2
-	for _, segment := range jps.SCs {
-		var (
-			segmentLength = "1-1000"
-			primers       []string
-			primersName   string
-			orientation   = ""
-		)
-
-		if segment.Length > 1000 {
-			segmentLength = "1001-2000"
-			if segment.Length > 2000 {
-				log.Fatalf("ID[%s]长度[%d]超标", segment.ID, segment.Length)
-			}
-		}
-
-		if segment.T7Primer {
-			primers = append(primers, "T7")
-		}
-		if segment.T7TermPrimer {
-			primers = append(primers, "T7-Term")
-		}
-		primersName = strings.Join(primers, "、")
-
-		if segment.T7Primer && segment.T7TermPrimer {
-			orientation = "C"
-		} else if segment.T7Primer {
-			orientation = "A"
-		} else if segment.T7TermPrimer {
-			orientation = "B"
-		}
-
-		for _, cloneID := range segment.SequenceCloneIDs {
-			rIdx++
-			cellName := CoordinatesToCellName(1, rIdx)
-
-			clone := segment.CloneMap[cloneID]
-			simpleUtil.CheckErr(
-				xlsx.SetSheetRow(
-					sheet, cellName,
-					&[]any{
-						clone.Name,
-						"A", "U1AT",
-						segmentLength,
-						"A", "A",
-						primersName,
-						"",
-						orientation,
-						"样本与表格一一对应",
-					},
-				),
+	for _, jpPanel := range jps.List {
+		for _, segment := range jpPanel.Segments {
+			var (
+				segmentLength = "1-1000"
+				primers       []string
+				primersName   string
+				orientation   = ""
 			)
+
+			if segment.Length > 1000 {
+				segmentLength = "1001-2000"
+				if segment.Length > 2000 {
+					log.Fatalf("ID[%s]长度[%d]超标", segment.ID, segment.Length)
+				}
+			}
+
+			if segment.T7Primer {
+				primers = append(primers, "T7")
+			}
+			if segment.T7TermPrimer {
+				primers = append(primers, "T7-Term")
+			}
+			primersName = strings.Join(primers, "、")
+
+			if segment.T7Primer && segment.T7TermPrimer {
+				orientation = "C"
+			} else if segment.T7Primer {
+				orientation = "A"
+			} else if segment.T7TermPrimer {
+				orientation = "B"
+			}
+
+			for _, cloneID := range segment.SequenceCloneIDs {
+				rIdx++
+				cellName := CoordinatesToCellName(1, rIdx)
+
+				clone := segment.CloneMap[cloneID]
+				simpleUtil.CheckErr(
+					xlsx.SetSheetRow(
+						sheet, cellName,
+						&[]any{
+							clone.Name,
+							"A", "U1AT",
+							segmentLength,
+							"A", "A",
+							primersName,
+							"",
+							orientation,
+							"样本与表格一一对应",
+						},
+					),
+				)
+			}
 		}
 	}
 	InitYK(xlsx, sheet, rIdx, bgStyleMap)
@@ -331,63 +333,65 @@ func (jps *JPs) CreateGWZ(xlsx *excelize.File, sheet string, bgStyleMap map[int]
 	simpleUtil.HandleError(xlsx.NewSheet(sheet))
 
 	var index = 0
-	for _, segment := range jps.TYs {
-		var (
-			segmentLength = ""
+	for _, jpPanel := range jps.List {
+		for _, segment := range jpPanel.Segments {
+			var (
+				segmentLength = ""
 
-			otherPrimers = strings.Join(segment.OtherPrimers, ";")
-			T7           = ""
-			T7Term       = ""
-		)
-
-		var length500 = (segment.Length - 1) / 500
-		switch length500 {
-		case 0, 1:
-			segmentLength = "1-1000"
-		case 2:
-			segmentLength = "1001-1500"
-		case 3:
-			segmentLength = "1501-2000"
-		case 4:
-			segmentLength = "2001-2500"
-		case 5:
-			segmentLength = "2501-3000"
-		case 6:
-			segmentLength = "3001-3500"
-		case 7:
-			segmentLength = "3501-4000"
-		default:
-			segmentLength = ">4000"
-		}
-
-		if segment.T7Primer {
-			T7 = "T7"
-		}
-		if segment.T7TermPrimer {
-			T7Term = "T7ter"
-		}
-
-		for _, cloneID := range segment.SequenceCloneIDs {
-			index++
-			cellName := CoordinatesToCellName(1, index+1)
-
-			clone := segment.CloneMap[cloneID]
-			simpleUtil.CheckErr(
-				xlsx.SetSheetRow(
-					sheet, cellName,
-					&[]any{
-						index,
-						clone.Name,
-						segmentLength,
-						"",
-						T7,
-						T7Term,
-						otherPrimers,
-						"", "否", "否",
-						segment.Length,
-					},
-				),
+				otherPrimers = strings.Join(segment.OtherPrimers, ";")
+				T7           = ""
+				T7Term       = ""
 			)
+
+			var length500 = (segment.Length - 1) / 500
+			switch length500 {
+			case 0, 1:
+				segmentLength = "1-1000"
+			case 2:
+				segmentLength = "1001-1500"
+			case 3:
+				segmentLength = "1501-2000"
+			case 4:
+				segmentLength = "2001-2500"
+			case 5:
+				segmentLength = "2501-3000"
+			case 6:
+				segmentLength = "3001-3500"
+			case 7:
+				segmentLength = "3501-4000"
+			default:
+				segmentLength = ">4000"
+			}
+
+			if segment.T7Primer {
+				T7 = "T7"
+			}
+			if segment.T7TermPrimer {
+				T7Term = "T7ter"
+			}
+
+			for _, cloneID := range segment.SequenceCloneIDs {
+				index++
+				cellName := CoordinatesToCellName(1, index+1)
+
+				clone := segment.CloneMap[cloneID]
+				simpleUtil.CheckErr(
+					xlsx.SetSheetRow(
+						sheet, cellName,
+						&[]any{
+							index,
+							clone.Name,
+							segmentLength,
+							"",
+							T7,
+							T7Term,
+							otherPrimers,
+							"", "否", "是",
+							segment.Length,
+						},
+					),
+				)
+			}
 		}
 	}
 	InitGWZ(xlsx, sheet, index+1, bgStyleMap)
