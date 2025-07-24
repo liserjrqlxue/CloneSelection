@@ -35,7 +35,7 @@ var (
 	MaxSegmentSC = 6
 	MaxSegmentTY = 8
 	// 每个片段的克隆个数
-	MaxJPCloneSC = 16
+	MaxJPCloneSC = 24
 	MaxJPCloneTY = 12
 	// 每个输出板上的片段个数 Clone*Segment=96
 	MaxSegmentSelectSC  = 8
